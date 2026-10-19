@@ -29,8 +29,8 @@ for(let i=0;i<70;i++){let x=(Math.random()-.5)*195,z=(Math.random()-.5)*195;if(M
 for(let z=-100;z<105;z+=5){box(.2,1.4,.2,white,-10,.7,z);box(.2,1.4,.2,white,10,.7,z)}
 function crate(x,z){box(2.5,2.5,2.5,wood,x,1.25,z);box(2.6,.22,.22,dark,x,2.2,z+1.3);obstacle(x,z,3,3)}
 for(const [x,z] of [[-5,-20],[6,28],[-6,60],[5,-64],[-7,85],[7,-90]])crate(x,z);
+// Gun local forward is NEGATIVE Z, matching the direction of the camera and shots.
 const gun=new THREE.Group();camera.add(gun);scene.add(camera);gun.position.set(.48,-.43,-.8);
-box(.22,.22,.8,blue,0,0,-.25,gun);box(.3,.3,.55,white,0,.12,.1,gun);box(.19,.38,.18,dark,0,-.27,.23,gun);mesh(new THREE.CylinderGeometry(.14,.14,.68,14),blue,0,.25,.2,gun).rotation.z=Math.PI/2;mesh(new THREE.CylinderGeometry(.105,.105,.7,14),dark,0,.025,-.67,gun).rotation.x=Math.PI/2;mesh(new THREE.CylinderGeometry(.13,.13,.16,14),yellow,0,.025,-1.04,gun).rotation.x=Math.PI/2;box(.13,.07,.24,yellow,0,.24,-.34,gun);ball(.12,glass,0,.3,.2,gun);
 const particles=[],enemies=[],shots=[];let thirdPerson=false,aiming=false,aimBlend=0,thirdAvatar=null,gunParts={},muzzleLight=null;let verticalVelocity=0,grounded=true,slideTime=0,slideDir=new THREE.Vector3(),boss=null,bossWave=false,bossAttack=0;let active=false,dead=false,paused=false,wave=0,score=0,hp=100,ammo=30,reloading=false,reloadEnd=0,spawnLeft=0,spawnTimer=0,between=0,yaw=0,pitch=0,fireAt=0,walk=0,shake=0,hitTime=0,noticeEnd=0,kills=0,elapsed=0;const keys={};const player=new THREE.Vector3(0,1.7,0);const clock=new THREE.Clock();
 const audio=new (window.AudioContext||window.webkitAudioContext)();function tone(freq,duration=.08,type='sine',gain=.05,slide=0){if(audio.state==='suspended')audio.resume();let o=audio.createOscillator(),v=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),audio.currentTime+duration);v.gain.setValueAtTime(gain,audio.currentTime);v.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(v).connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}
 function notice(t,sec=2){$('notice').textContent=t;$('notice').style.opacity=1;noticeEnd=elapsed+sec}function toast(t){$('toast').textContent=t;$('toast').style.opacity=1;setTimeout(()=>$('toast').style.opacity=0,1100)}
@@ -51,7 +51,7 @@ function updateHud(){$('wave').textContent=String(wave).padStart(2,'0');$('remai
 function hurt(amount){hp=Math.max(0,hp-amount);$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170);tone(100,.25,'sawtooth',.05,-60);if(hp<=0){dead=true;active=false;$('bossHud').style.display='none';document.exitPointerLock?.();$('over').style.display='flex';$('finalstats').textContent='WAVE '+wave+'  ·  '+kills+' ANDREWS SOAKED  ·  '+score+' POINTS';$('hud').style.display='none'}updateHud()}
 function collide(x,z,radius=.48){if(Math.abs(x)>103||Math.abs(z)>103)return true;return obstacles.some(o=>{const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius))pos.z+=sz}}
 function tick(dt){elapsed+=dt;if(elapsed>noticeEnd)$('notice').style.opacity=0;if(reloading&&elapsed>=reloadEnd){reloading=false;ammo=30;$('reloadText').textContent='R TO RELOAD';tone(650,.13,'sine',.04);updateHud()}aiming=!!keys.Aim;aimBlend=THREE.MathUtils.damp(aimBlend,aiming?1:0,13,dt);camera.fov=THREE.MathUtils.lerp(76,thirdPerson?57:48,aimBlend);camera.updateProjectionMatrix();$('cross').classList.toggle('ads',aiming);if(keys.Mouse)fire();
-if(keys.Space&&grounded){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}if(keys.KeyC&&keys.ShiftLeft&&grounded&&slideTime<=0){slideTime=.8;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),moving=!!(f||s),speed=slideTime>0?14:keys.ShiftLeft?10:6.5;let v=new THREE.Vector3(s,0,-f);if(v.lengthSq())v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed*dt);if(slideTime>0){v.copy(slideDir).multiplyScalar(speed*dt);slideTime=Math.max(0,slideTime-dt)}verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(player.y<=1.7){player.y=1.7;verticalVelocity=0;grounded=true}moveWithCollision(player,v.x,v.z,.52);walk+=moving?dt*(keys.ShiftLeft?15:10):dt*2;camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*.045:Math.sin(walk)*.012;camera.position.y-=slideTime>0?.65:0;camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,slideTime>0?Math.sin(elapsed*6)*.035:0);shake=Math.max(0,shake-dt*.7);gun.position.set(THREE.MathUtils.lerp(.48,.03,aimBlend)+Math.sin(walk)*.007,-.43+Math.abs(Math.sin(walk))*(moving?.018:0)-shake*.35,THREE.MathUtils.lerp(-.8,-.58,aimBlend)+shake*.25);gun.rotation.x=-shake*.35;gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();
+if(keys.Space&&grounded){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}if(keys.KeyC&&keys.ShiftLeft&&grounded&&slideTime<=0){slideTime=.8;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),moving=!!(f||s),speed=slideTime>0?14:keys.ShiftLeft?10:6.5;let v=new THREE.Vector3(s,0,-f);if(v.lengthSq())v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed*dt);if(slideTime>0){v.copy(slideDir).multiplyScalar(speed*dt);slideTime=Math.max(0,slideTime-dt)}verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(player.y<=1.7){player.y=1.7;verticalVelocity=0;grounded=true}moveWithCollision(player,v.x,v.z,.52);walk+=moving?dt*(keys.ShiftLeft?15:10):dt*2;camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*.045:Math.sin(walk)*.012;camera.position.y-=slideTime>0?.65:0;camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,slideTime>0?Math.sin(elapsed*6)*.035:0);shake=Math.max(0,shake-dt*.7);gun.position.set(THREE.MathUtils.lerp(.48,0,aimBlend)+Math.sin(walk)*.007,-.43+Math.abs(Math.sin(walk))*(moving?.018:0)-shake*.35,THREE.MathUtils.lerp(-.8,-.64,aimBlend)+shake*.25);gun.rotation.x=-shake*.35;gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();
 if(boss)updateBoss(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(100,hp+15);updateHud()}else if(elapsed>=between){between=0;startWave()}}
 for(let i=enemies.length-1;i>=0;i--){let e=enemies[i],g=e.g,dx=player.x-g.position.x,dz=player.z-g.position.z,dist=Math.hypot(dx,dz);g.rotation.y=Math.atan2(dx,dz);g.position.y=Math.sin(elapsed*11+e.phase)*.075;g.rotation.z=Math.sin(elapsed*13+e.phase)*.08;for(const side of [-1,1]){g.userData['arm'+side].rotation.x=Math.sin(elapsed*11+e.phase)*side*.65;g.userData['leg'+side].rotation.x=-Math.sin(elapsed*11+e.phase)*side*.7}if(dist>1.2){let nx=g.position.x+dx/dist*e.speed*dt,nz=g.position.z+dz/dist*e.speed*dt;const oldX=g.position.x,oldZ=g.position.z;moveWithCollision(g.position,dx/dist*e.speed*dt,dz/dist*e.speed*dt,.4);if(Math.hypot(g.position.x-oldX,g.position.z-oldZ)<.001){moveWithCollision(g.position,-dz/dist*dt*e.speed*.6,dx/dist*dt*e.speed*.6,.4)}}else if(elapsed>e.attack){e.attack=elapsed+.85;hurt(8+Math.floor(wave/4)*2)}}
 for(let i=shots.length-1;i>=0;i--){const sh=shots[i];const previous=sh.m.position.clone();sh.m.position.addScaledVector(sh.v,dt);sh.life-=dt;const steps=Math.max(1,Math.ceil(sh.v.length()*dt/.35));for(let k=1;k<=steps;k++){const x=THREE.MathUtils.lerp(previous.x,sh.m.position.x,k/steps),z=THREE.MathUtils.lerp(previous.z,sh.m.position.z,k/steps);if(collide(x,z,.09)){sh.m.position.set(x,THREE.MathUtils.lerp(previous.y,sh.m.position.y,k/steps),z);burst(sh.m.position,7,0x73eaff,2.5);sh.life=0;break}}if(boss&&sh.m.position.distanceTo(boss.g.position.clone().add(new THREE.Vector3(0,3.1,0)))<3.1){boss.hp--;burst(sh.m.position,12,0x77eaff,7);sh.life=0;tone(130,.12,'triangle',.03,130);if(boss.hp<=0)killBoss()}let hit=-1;for(let j=0;j<enemies.length;j++){let p=enemies[j].g.position;if(Math.hypot(sh.m.position.x-p.x,sh.m.position.z-p.z)<.56&&Math.abs(sh.m.position.y-(p.y+1.1))<1.1){hit=j;break}}if(hit>=0){let e=enemies[hit];e.hp--;burst(sh.m.position,12,0x6eefff,4);$('hit').style.opacity=1;hitTime=elapsed+.12;tone(700,.07,'sine',.025,-250);if(e.hp<=0){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),17,0x9cde59,6);scene.remove(e.g);enemies.splice(hit,1);kills++;score+=100;updateHud()}sh.life=0}if(sh.life<=0||Math.abs(sh.m.position.x)>108||Math.abs(sh.m.position.z)>108){scene.remove(sh.m);shots.splice(i,1)}}if(elapsed>hitTime)$('hit').style.opacity=0;
@@ -88,7 +88,63 @@ function killBoss(){if(!boss)return;burst(boss.g.position.clone().add(new THREE.
 /* High-detail blaster assembly: layered housing, tanks, ribs, sight and glow. */
 const cobalt=mat(0x0755b8,.22,.55),navy=mat(0x09253e,.3,.5),orange=mat(0xff7b1b,.28,.2),steel=mat(0xc8d7e5,.18,.82),rubber=mat(0x152e40,.8),aqua=new THREE.MeshStandardMaterial({color:0x58efff,emissive:0x0088bb,emissiveIntensity:1.4,metalness:.2,roughness:.18,transparent:true,opacity:.88});
 function cylinder(radius,height,m,x,y,z,parent=gun,rotX=Math.PI/2){const obj=mesh(new THREE.CylinderGeometry(radius,radius,height,16),m,x,y,z,parent);obj.rotation.x=rotX;return obj}
-function detailGun(){box(.37,.29,1.3,cobalt,0,.01,-.37,gun);box(.4,.12,.84,orange,0,.19,-.36,gun);box(.28,.24,.7,navy,0,-.17,-.35,gun);for(let z=-.84;z<.18;z+=.15){box(.4,.045,.05,steel,0,.18,z,gun);box(.43,.045,.055,navy,0,-.17,z,gun)}cylinder(.16,1.3,steel,0,.015,-.65);cylinder(.12,1.42,aqua,0,.015,-.69);cylinder(.2,.18,orange,0,.015,-1.37);cylinder(.14,.08,navy,0,.015,-1.5);cylinder(.23,.5,aqua,-.23,.24,.15,gun,0);cylinder(.24,.06,steel,-.23,.24,.43,gun,0);cylinder(.24,.06,orange,-.23,.24,-.13,gun,0);box(.13,.35,.23,rubber,0,-.36,.18,gun);box(.08,.13,.45,steel,0,.32,-.28,gun);box(.12,.1,.13,orange,0,.39,-.58,gun);for(let z=-1.2;z<-.4;z+=.23)cylinder(.19,.055,orange,0,.015,z);muzzleLight=new THREE.PointLight(0x55eaff,0,6);muzzleLight.position.set(0,.015,-1.5);gun.add(muzzleLight)}
+function detailGun(){
+ // Reference-accurate silhouette: horizontal green pressurized tank ABOVE the orange frame,
+ // long silver lower barrel, orange rear grip and orange front muzzle. Forward = -Z.
+ const tangerine=mat(0xf29112,.3,.12),orangeDark=mat(0xb85b08,.48,.15);
+ const tankGreen=mat(0x4acb69,.2,.1),tankShade=mat(0x248b4a,.35,.12);
+ const polished=mat(0xcbd7e1,.14,.8),steelDark=mat(0x65737e,.27,.7);
+ const grip=mat(0xc7770c,.7),trigger=mat(0x8a9ba5,.25,.65);
+ const blackGap=mat(0x252e31,.75),waterGlow=mat(0x9bf4d4,.15,.1);
+ // Entire gun is about 2.45 units long. Top tank is the most prominent element.
+ const tankY=.35,tankBack=.43,tankFront=-1.31,tankRadius=.275;
+ cylinder(tankRadius,1.64,tankGreen,0,tankY,-.44,gun);
+ ball(tankRadius,tankGreen,0,tankY,-1.26,gun).scale.z=.75;
+ ball(tankRadius,tankGreen,0,tankY,.38,gun).scale.z=.75;
+ cylinder(.294,.075,tangerine,0,tankY,.16,gun);
+ cylinder(.296,.095,orangeDark,0,tankY,.21,gun);
+ cylinder(.31,.14,tangerine,0,tankY,.47,gun);
+ cylinder(.24,.11,orangeDark,0,tankY,.55,gun);
+ box(.46,.16,.2,tangerine,0,.19,.56,gun);
+ // Long exposed metallic pump/barrel UNDER the tank.
+ cylinder(.11,1.78,polished,0,-.105,-.54,gun);
+ cylinder(.13,.21,steelDark,0,-.105,-1.36,gun);
+ cylinder(.15,.2,tangerine,0,-.105,-1.49,gun);
+ cylinder(.125,.11,orangeDark,0,-.105,-1.61,gun);
+ cylinder(.085,.04,blackGap,0,-.105,-1.68,gun);
+ // Orange molded receiver, sloped cheek and underside rails.
+ box(.44,.29,.93,tangerine,0,-.23,.14,gun);
+ box(.48,.1,.76,orangeDark,0,-.37,.05,gun);
+ box(.47,.11,.55,tangerine,0,-.04,.16,gun);
+ box(.48,.14,.3,tangerine,0,-.19,.59,gun);
+ box(.44,.18,.26,orangeDark,0,-.24,-.61,gun);
+ box(.46,.13,.34,tangerine,0,-.27,-1.24,gun);
+ box(.4,.13,1.22,tangerine,0,-.38,-.58,gun);
+ box(.36,.045,1.3,orangeDark,0,-.46,-.55,gun);
+ // Pistol grip slants BACK toward the player, with finger grooves.
+ const handle=new THREE.Group();handle.position.set(0,-.42,.42);handle.rotation.x=-.21;gun.add(handle);
+ box(.35,.63,.26,grip,0,-.28,0,handle);
+ box(.4,.14,.31,tangerine,0,-.6,.025,handle);
+ for(let j=0;j<4;j++)box(.365,.035,.28,orangeDark,0,-.19-j*.105,.008,handle);
+ // Trigger and open trigger guard, with a visible dark opening.
+ box(.29,.19,.38,blackGap,0,-.46,-.01,gun);
+ box(.3,.045,.45,tangerine,0,-.59,-.025,gun);
+ box(.31,.23,.055,tangerine,0,-.49,-.26,gun);
+ const trig=box(.055,.2,.065,trigger,0,-.42,-.11,gun);trig.rotation.x=.27;
+ // Distinct orange front pump housing and sculpted ribs.
+ box(.48,.27,.35,tangerine,0,-.25,-1.39,gun);
+ for(let j=0;j<5;j++)box(.5,.06,.035,orangeDark,0,-.24,-1.25-j*.07,gun);
+ // Visible molded panel seam details along the receiver.
+ for(let side of [-1,1]){
+  box(.018,.018,.52,orangeDark,side*.234,-.12,.14,gun);
+  ball(.028,polished,side*.245,-.19,.45,gun);
+  ball(.028,polished,side*.245,-.19,-.27,gun);
+ }
+ // The tank is glossy green, NOT blue; this is intentionally faithful to the photo.
+ muzzleLight=new THREE.PointLight(0x84e9ff,0,6);
+ muzzleLight.position.set(0,-.105,-1.72);gun.add(muzzleLight);
+ gunParts.muzzleZ=-1.72;
+}
 detailGun();
 const tomChrome=mat(0xc5d5e7,.12,.95),tomArmor=mat(0x17334a,.35,.65),tomVisor=mat(0x74e6ff,.08,.75);
 function makeTom(){const g=new THREE.Group();const torso=box(.88,1.04,.42,tomArmor,0,1.28,0,g);box(.74,.2,.48,tomChrome,0,1.7,0,g);const head=ball(.34,tomChrome,0,2.04,0,g);head.scale.set(.85,1.1,.9);box(.48,.12,.14,tomVisor,0,2.1,.3,g);for(let s of [-1,1]){ball(.25,tomChrome,s*.55,1.62,0,g);const arm=new THREE.Group();arm.position.set(s*.54,1.54,0);g.add(arm);box(.22,.7,.25,tomArmor,0,-.35,0,arm);g.userData['arm'+s]=arm;const leg=new THREE.Group();leg.position.set(s*.24,.84,0);g.add(leg);box(.28,.8,.32,tomChrome,0,-.4,0,leg);g.userData['leg'+s]=leg}box(.8,.16,.45,orange,0,.81,0,g);const backpack=box(.7,.86,.3,cobalt,0,1.3,-.34,g);cylinder(.2,.85,aqua,-.2,1.32,-.57,g,0);cylinder(.2,.85,aqua,.2,1.32,-.57,g,0);return g}

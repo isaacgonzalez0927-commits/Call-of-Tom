@@ -26,36 +26,59 @@ const beach=mat(0xf2eee1),turf=mat(0x77bb6d),rockDark=mat(0x66677e),rockPale=mat
 const ground=mesh(new THREE.CylinderGeometry(94,94,.55,72),beach,0,-.3,0);ground.castShadow=false;
 const meadow=mesh(new THREE.CylinderGeometry(85,85,.15,72),turf,0,.04,0);meadow.castShadow=false;
 function seeded(s){return()=>((s=(s*1664525+1013904223)>>>0)/4294967296)}const rand=seeded(81729);
-function rock(x,z,r){const o=mesh(new THREE.DodecahedronGeometry(r,0),rand()>.5?rockDark:rockPale,x,r*.32,z);o.scale.set(1.35,.7,1);o.rotation.y=rand()*6.28;obstacle(x,z,r*1.8,r*1.5)}
-function shrub(x,z,s){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);for(let j=0;j<5;j++){const o=mesh(new THREE.DodecahedronGeometry(s*(.5+rand()*.4),0),j%2?frond:bush,(rand()-.5)*s*1.6,s*.55,(rand()-.5)*s*1.6,g);o.castShadow=false}}
-function palm(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);const h=9+rand()*4,lean=(rand()-.5)*1.2;for(let j=0;j<6;j++){const t=j/6;const seg=mesh(new THREE.CylinderGeometry(.28-t*.1,.53-t*.19,h/6,7),palmBark,lean*t,h*(j+.5)/6,0,g);seg.rotation.z=-lean/h;for(let k=0;k<2;k++){const ring=mesh(new THREE.TorusGeometry(.35-t*.12,.035,4,7),rockDark,lean*t,h*(j+.2+k*.34)/6,0,g);ring.rotation.x=Math.PI/2}}const crown=new THREE.Group();crown.position.set(lean,h,0);g.add(crown);for(let j=0;j<11;j++){const angle=j*Math.PI*2/11;const leaf=new THREE.Group();leaf.rotation.y=angle;crown.add(leaf);for(let k=0;k<5;k++){const len=1.25+k*.88;const blade=mesh(new THREE.ConeGeometry(.72-k*.1,2.1,3),j%3?frond:frondLight,0,-.13*k,len,leaf);blade.rotation.x=Math.PI/2-.3-k*.13;blade.castShadow=false}}for(let k=0;k<4;k++)ball(.22,palmBark,lean+Math.cos(k*1.57)*.32,h-.4,Math.sin(k*1.57)*.32,g);obstacle(x,z,.85*s,.85*s)}
+function clearCastleGround(x,z){return x>-23&&x<23&&z>-68&&z< -17}
+function rock(x,z,r){if(clearCastleGround(x,z))return;const o=mesh(new THREE.DodecahedronGeometry(r,0),rand()>.5?rockDark:rockPale,x,r*.32,z);o.scale.set(1.35,.7,1);o.rotation.y=rand()*6.28;obstacle(x,z,r*1.8,r*1.5)}
+function shrub(x,z,s){if(clearCastleGround(x,z))return;const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const greens=[bush,frond,frondLight];for(let j=0;j<7;j++){const a=j*2.39996,r=(j===0?0:.33+rand()*.4)*s;const o=mesh(new THREE.IcosahedronGeometry(s*(j===0?.63:.36+rand()*.13),1),greens[j%3],Math.cos(a)*r,s*(.33+rand()*.12),Math.sin(a)*r,g);o.scale.set(1.15,.67,1.1);o.castShadow=false}for(let j=0;j<5;j++){const a=j*1.257;const leaf=mesh(new THREE.ConeGeometry(.22*s,.9*s,4),greens[j%3],Math.cos(a)*s*.5,s*.4,Math.sin(a)*s*.5,g);leaf.rotation.z=Math.sin(a)*.8;leaf.rotation.x=Math.cos(a)*.8;leaf.castShadow=false}}
+function palm(x,z,s=1){if(clearCastleGround(x,z))return;const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);const h=8.5+rand()*3.8,lean=(rand()-.5)*1.3;const barkColors=[palmBark,wood];for(let j=0;j<9;j++){const t=j/9;const part=mesh(new THREE.CylinderGeometry(.23-t*.075,.4-t*.15,h/9,9),barkColors[j%3===0?1:0],lean*(t+.05),h*(j+.5)/9,0,g);part.rotation.z=-lean/h;part.castShadow=j%2===0}const crown=new THREE.Group();crown.position.set(lean,h,0);g.add(crown);for(let j=0;j<12;j++){const a=j*Math.PI*2/12,drop=.2+rand()*.27;for(let k=0;k<6;k++){const r=.45+k*.59,spread=.57-k*.048;const blade=mesh(new THREE.BoxGeometry(spread,.055,.83),j%3===0?frondLight:frond,Math.sin(a)*r,1.0-k*drop,Math.cos(a)*r,crown);blade.rotation.y=a;blade.rotation.x=-.2;blade.castShadow=false;for(let side of [-1,1]){if(k===0)continue;const leaflet=mesh(new THREE.BoxGeometry(.14,.035,.65),j%2?frond:frondLight,Math.sin(a)*r+Math.cos(a)*side*.31,1.0-k*drop-.06,Math.cos(a)*r-Math.sin(a)*side*.31,crown);leaflet.rotation.y=a+side*.4;leaflet.castShadow=false}}}for(let k=0;k<5;k++){const a=k*Math.PI*2/5;ball(.2,wood,Math.cos(a)*.32,-.2,Math.sin(a)*.32,crown)}obstacle(x,z,.75*s,.75*s)}
 for(let i=0;i<105;i++){let a=rand()*6.283,r=80+rand()*13,x=Math.cos(a)*r,z=Math.sin(a)*r;if(i%3===0)rock(x,z,1+rand()*3);else shrub(x,z,1+rand()*1.4)}
 for(let i=0;i<35;i++){let a=rand()*6.283,r=18+rand()*58,x=Math.cos(a)*r,z=Math.sin(a)*r;if(i%5===0)rock(x,z,1+rand()*2);else palm(x,z,.75+rand()*.6)}
 for(let i=0;i<55;i++){let a=rand()*6.283,r=12+rand()*62,x=Math.cos(a)*r,z=Math.sin(a)*r;shrub(x,z,.5+rand()*.9)}
 function crate(x,z){solidBox(2.4,2.4,2.4,wood,x,1.2,z)}for(const [x,z] of [[-15,-19],[18,28],[-23,41],[25,-34]])crate(x,z);
 
 
-/* Open-air coastal castle: four corner towers, accessible gate, stairs and ladders. */
-const castleStone=mat(0x9c9ca5),castleTrim=mat(0xc9c3ae),castleDark=mat(0x686a79),castleWood=mat(0x70513c),castleFlag=mat(0x168ac0);
-const castleX=0,castleZ=-43,castleHalf=17,castleFloors=[],castleStairs=[];
+
+/* Rebuilt playable castle: clear approach, open gateway, walkable ramp, ladders and towers. */
+const castleStone=mat(0x8b8f9c),castleTrim=mat(0xc7c0a7),castleDark=mat(0x53596a),castleWood=mat(0x78523b),castleFlag=mat(0x168ac0);
+const castleX=0,castleZ=-43,castleHalf=17,castleFloors=[],castleStairs=[],castleLadders=[];
 function castleBlock(x,y,z,w,h,d,m=castleStone,solid=true){const o=box(w,h,d,m,x,y,z);if(solid)obstacle(x,z,w,d);return o}
-function floorPlatform(x,z,w,d,y){const o=box(w,.45,d,castleTrim,x,y-.23,z);castleFloors.push({x,z,w,d,y});return o}
+function floorPlatform(x,z,w,d,y){box(w,.4,d,castleTrim,x,y-.2,z);castleFloors.push({x,z,w,d,y})}
 function buildCastle(){const cx=castleX,cz=castleZ;
- // Raised battlements around a playable, open central courtyard.
- for(let side of [-1,1]){castleBlock(cx+side*17,3.4,cz,2.3,6.8,34);castleBlock(cx+side*9.8,3.4,cz-17,14.4,6.8,2.3);castleBlock(cx+side*9.8,3.4,cz+17,14.4,6.8,2.3)}
- // Gate is a wide clear opening in the front wall.
- for(let side of [-1,1])castleBlock(cx+side*5.8,3.4,cz+17,9.2,6.8,2.3);
- // Walkable upper ramparts with crenellations.
- for(let side of [-1,1]){floorPlatform(cx+side*15.5,cz,3.5,31,6.8);floorPlatform(cx,cz+side*15.5,31,3.5,6.8)}
- for(let side of [-1,1])for(let i=-6;i<=6;i++){castleBlock(cx+side*17,7.3,cz+i*2.4,2.4,1.2,1.4,castleTrim,false);castleBlock(cx+i*2.4,7.3,cz+side*17,1.4,1.2,2.4,castleTrim,false)}
- // Four octagonal watchtowers with playable roof platforms.
- for(let sx of [-1,1])for(let sz of [-1,1]){let x=cx+sx*16,z=cz+sz*16;const t=mesh(new THREE.CylinderGeometry(3.2,3.6,11,8),castleStone,x,5.5,z);obstacle(x,z,5.4,5.4);floorPlatform(x,z,6.4,6.4,11.2);const roof=mesh(new THREE.ConeGeometry(4,3.2,8),castleDark,x,14,z);for(let k=0;k<4;k++)box(.65,.85,.65,castleTrim,x+Math.sin(k*1.57)*3,11.6,z+Math.cos(k*1.57)*3)}
- // Interior stairs: broad steps connect ground to eastern wall walkway.
- for(let i=0;i<15;i++){const y=(i+1)*.45,x=cx+10,z=cz+12-i*.8;box(3,.3,1.1,castleTrim,x,y-.15,z);castleFloors.push({x,z,w:3,d:1.1,y});castleStairs.push({x,z,w:3,d:1.1,y})}
- // Ladder against the west wall: climb while holding W when close.
- for(let i=0;i<12;i++)box(1.5,.13,.17,castleWood,cx-14.8,.55+i*.52,cz-8);
- for(let side of [-1,1])box(.15,6.8,.17,castleWood,cx-14.8+side*.8,3.4,cz-8);
- for(let side of [-1,1]){const pole=box(.13,5,.13,castleWood,cx+side*12,10,cz-15);const flag=box(2.4,1.4,.07,castleFlag,cx+side*12+1.2,11.4,cz-15)}
+ // Castle occupies a clear 40 x 40 site, with the open gate facing the island center.
+ castleBlock(cx-17,3.5,cz,2.5,7,34);
+ castleBlock(cx+17,3.5,cz,2.5,7,34);
+ castleBlock(cx,3.5,cz-17,34,7,2.5);
+ castleBlock(cx-11,3.5,cz+17,12,7,2.5);
+ castleBlock(cx+11,3.5,cz+17,12,7,2.5);
+ // Open gateway: 10 studs wide, with a decorative arch lintel above.
+ castleBlock(cx,7.7,cz+17,11,1.2,2.5,castleTrim,false);
+ for(let side of [-1,1]){castleBlock(cx+side*5.4,4.3,cz+17,1,8.6,3,castleDark,false);castleBlock(cx+side*17,7.1,cz,2.7,.6,34,castleTrim,false)}
+ // Walkable rampart platforms, parapets and crenellations.
+ floorPlatform(cx-15,cz,3.7,32,7.1);floorPlatform(cx+15,cz,3.7,32,7.1);
+ floorPlatform(cx,cz-15,31,3.7,7.1);floorPlatform(cx-11,cz+15,9,3.7,7.1);floorPlatform(cx+11,cz+15,9,3.7,7.1);
+ for(let side of [-1,1])for(let i=-6;i<=6;i++){if(i%2===0){castleBlock(cx+side*17,8.1,cz+i*2.4,2.5,1.5,1.5,castleTrim,false);castleBlock(cx+i*2.4,8.1,cz+side*17,1.5,1.5,2.5,castleTrim,false)}}
+ // Corner towers: layered stone shafts, balconies, banners and roofs.
+ for(let sx of [-1,1])for(let sz of [-1,1]){const x=cx+sx*16,z=cz+sz*16;mesh(new THREE.CylinderGeometry(3.2,3.7,11.5,10),castleStone,x,5.75,z);obstacle(x,z,5.7,5.7);for(let h of [2.1,4.2,6.3,8.4])mesh(new THREE.CylinderGeometry(3.55,3.55,.2,10),castleTrim,x,h,z);floorPlatform(x,z,6.8,6.8,11.7);mesh(new THREE.ConeGeometry(4.25,3.5,10),castleDark,x,15.4,z);for(let k=0;k<8;k++){const a=k*Math.PI/4;castleBlock(x+Math.sin(a)*3.3,12,z+Math.cos(a)*3.3,.7,.9,.7,castleTrim,false)}}
+ // Main keep inside the courtyard: two floors, doorway and windows.
+ castleBlock(cx-6,2.8,cz-6,1.5,5.6,12,castleDark);
+ castleBlock(cx+6,2.8,cz-6,1.5,5.6,12,castleDark);
+ castleBlock(cx,2.8,cz-12,12,5.6,1.5,castleDark);
+ castleBlock(cx-4.5,2.8,cz,3,5.6,1.5,castleDark);
+ castleBlock(cx+4.5,2.8,cz,3,5.6,1.5,castleDark);
+ castleBlock(cx,5.4,cz,6,1,1.5,castleTrim,false);
+ floorPlatform(cx,cz-6,12,12,5.9);
+ for(let side of [-1,1])for(let i=0;i<3;i++)box(.65,1.3,.12,castleTrim,cx+side*6.85,2.7,cz-9+i*3);
+ // Interior props: feast tables, benches, shields, banners, treasure and torches.
+ const red=mat(0xa02f36),gold=mat(0xf0b944),iron=mat(0x3c4657);
+ for(let z of [cz+5,cz-2]){castleBlock(cx-7,.85,z,3.8,.45,1.8,castleWood,false);for(let s of [-1,1])castleBlock(cx-7+s*1.45,.35,z, .25,.7,1.4,castleWood,false);for(let s of [-1,1])castleBlock(cx-7,.38,z+s*1.65,3.2,.45,.65,castleWood,false)}
+ for(let z of [cz+7,cz-7]){castleBlock(cx+8,.55,z,2,1.1,1.3,castleWood,false);box(1.8,.13,1.1,gold,cx+8,1.14,z)}
+ for(let side of [-1,1]){castleBlock(cx+side*13,4.3,cz+5,.12,3.2,1.6,red,false);mesh(new THREE.ConeGeometry(.35,.9,5),gold,cx+side*13,5.9,cz+5);for(let z of [cz+11,cz-11]){const torch=mesh(new THREE.ConeGeometry(.22,.65,6),gold,cx+side*13,2.7,z);torch.rotation.z=Math.PI}}
+ // Continuous staircase up to eastern battlements: broad 20 steps with no collision boxes.
+ // The invisible walking height is calculated from position rather than relying on discrete step collisions.
+ for(let i=0;i<20;i++){const y=(i+1)*.355,z=cz+12-i*.85;box(4.5,.28,1.05,castleTrim,cx+12.3,y-.14,z);castleStairs.push({x:cx+12.3,z,w:4.5,d:1.05,y})}
+ floorPlatform(cx+12.3,cz-5,6,4,7.1);
+ // Two climbable ladders with visible rungs and automatic step-off.
+ for(const [x,z,top] of [[cx-13,cz+8,7.1],[cx+5,cz-5,5.9]]){castleLadders.push({x,z,top});for(let i=0;i<Math.ceil(top/.42);i++)box(1.2,.11,.17,castleWood,x,.35+i*.42,z);for(let s of [-1,1])box(.13,top,.2,castleWood,x+s*.68,top/2,z)}
+ for(let side of [-1,1]){box(.15,4.8,.15,castleWood,cx+side*11,10,cz-15);box(2.6,1.5,.08,castleFlag,cx+side*11+1.3,11.2,cz-15)}
 }
 buildCastle();
 const pickups=[];
@@ -90,7 +113,7 @@ function fire(){
  const viewOrigin=camera.position.clone(),target=viewOrigin.clone().addScaledVector(viewDirection,110);
  let best=110;
  // Find nearest visible Andrew or boss along the crosshair.
- const targets=enemies.map(e=>({pos:e.g.position.clone().add(new THREE.Vector3(0,1.1*e.scale,0)),radius:.64*e.scale}));
+ const targets=enemies.map(e=>({pos:e.g.position.clone().add(new THREE.Vector3(0,1.1*e.scale,0)),radius:1.05*e.scale}));
  if(boss)targets.push({pos:boss.g.position.clone().add(new THREE.Vector3(0,3.5,0)),radius:2.8});
  for(const t of targets){const to=t.pos.clone().sub(viewOrigin),along=to.dot(viewDirection);if(along<0||along>best)continue;const miss=to.clone().addScaledVector(viewDirection,-along).length();if(miss<t.radius){const enter=along-Math.sqrt(Math.max(0,t.radius*t.radius-miss*miss));if(enter<best){best=Math.max(1,enter);target.copy(viewOrigin).addScaledVector(viewDirection,best)}}}
  // Check map obstacle boxes on the same line so walls take priority over enemies.
@@ -110,7 +133,7 @@ function tick(dt){elapsed+=dt;if(elapsed>noticeEnd)$('notice').style.opacity=0;i
 mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spaceHeld){if(!startMantle()){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}}keys._spaceHeld=!!keys.Space;if(keys.KeyC&&keys.ShiftLeft&&grounded&&slideTime<=0){slideTime=.8;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),moving=!!(f||s),speed=(slideTime>0?14:keys.ShiftLeft?10:6.5)*(elapsed<speedBoostUntil?1.55:1);let v=new THREE.Vector3(s,0,-f);if(v.lengthSq())v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed*dt);if(slideTime>0){v.copy(slideDir).multiplyScalar(speed*dt);slideTime=Math.max(0,slideTime-dt)}if(mantle){mantle.t=Math.min(1,mantle.t+dt/mantle.duration);const t=mantle.t,s=t*t*(3-2*t);player.lerpVectors(mantle.start,mantle.end,s);player.y+=Math.sin(Math.PI*t)*.45;if(t>=1){mantle=null;grounded=true}}else{verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;let floor=1.7;for(const o of [...mantleSurfaces,...castleFloors.map(p=>({x:p.x,z:p.z,w:p.w,d:p.d,top:p.y}))]){if(Math.abs(player.x-o.x)<o.w/2-.15&&Math.abs(player.z-o.z)<o.d/2-.15&&player.y>=1.7+o.top-.12&&verticalVelocity<=0)floor=Math.max(floor,1.7+o.top)}if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}moveWithCollision(player,v.x,v.z,.52,Math.max(0,player.y-1.7));if(grounded){for(const step of castleStairs){if(Math.abs(player.x-step.x)<step.w/2+.15&&Math.abs(player.z-step.z)<step.d/2+.15&&step.y+1.7>=player.y-.15&&step.y+1.7<=player.y+.72){player.y=step.y+1.7;break}}}const ladderX=castleX-14.8,ladderZ=castleZ-8;if(Math.hypot(player.x-ladderX,player.z-ladderZ)<1.3&&keys.KeyW&&player.y<8.5){player.y=Math.min(8.5,player.y+dt*4.8);verticalVelocity=0;grounded=false}if(player.y>8.2&&Math.hypot(player.x-ladderX,player.z-ladderZ)<1.6){player.y=Math.max(player.y,8.5);grounded=true}}updatePickups(dt);walk+=moving?dt*(keys.ShiftLeft?15:10):dt*2;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*.045:Math.sin(walk)*.012;camera.position.y-=slideTime>0?.65:0;}camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,slideTime>0?Math.sin(elapsed*6)*.035:0);shake=Math.max(0,shake-dt*.7);gun.position.set(THREE.MathUtils.lerp(.53,.29,aimBlend)+Math.sin(walk)*.004,THREE.MathUtils.lerp(-.55,-.76,aimBlend)+Math.abs(Math.sin(walk))*(moving?.012:0)-shake*.25,THREE.MathUtils.lerp(-.94,-.85,aimBlend)+shake*.18);gun.scale.setScalar(.72);gun.rotation.x=-shake*.35;gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
 if(boss)updateBoss(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(100,hp+15);updateHud()}else if(elapsed>=between){between=0;startWave()}}
 for(let i=enemies.length-1;i>=0;i--){let e=enemies[i],g=e.g,dx=player.x-g.position.x,dz=player.z-g.position.z,dist=Math.hypot(dx,dz);g.rotation.y=Math.atan2(dx,dz);g.position.y=Math.sin(elapsed*11+e.phase)*.075;g.rotation.z=Math.sin(elapsed*13+e.phase)*.08;for(const side of [-1,1]){g.userData['arm'+side].rotation.x=Math.sin(elapsed*11+e.phase)*side*.65;g.userData['leg'+side].rotation.x=-Math.sin(elapsed*11+e.phase)*side*.7}if(dist>1.2){let nx=g.position.x+dx/dist*e.speed*dt,nz=g.position.z+dz/dist*e.speed*dt;const oldX=g.position.x,oldZ=g.position.z;moveWithCollision(g.position,dx/dist*e.speed*dt,dz/dist*e.speed*dt,.4);if(Math.hypot(g.position.x-oldX,g.position.z-oldZ)<.001){moveWithCollision(g.position,-dz/dist*dt*e.speed*.6,dx/dist*dt*e.speed*.6,.4)}}else if(elapsed>e.attack){e.attack=elapsed+.85;hurt(8+Math.floor(wave/4)*2)}}
-for(let i=shots.length-1;i>=0;i--){const sh=shots[i];const previous=sh.m.position.clone();sh.m.position.addScaledVector(sh.v,dt);sh.life-=dt;const steps=Math.max(1,Math.ceil(sh.v.length()*dt/.35));for(let k=1;k<=steps;k++){const x=THREE.MathUtils.lerp(previous.x,sh.m.position.x,k/steps),z=THREE.MathUtils.lerp(previous.z,sh.m.position.z,k/steps);if(collide(x,z,.09)){sh.m.position.set(x,THREE.MathUtils.lerp(previous.y,sh.m.position.y,k/steps),z);burst(sh.m.position,7,0x73eaff,2.5);sh.life=0;break}}if(boss&&sh.m.position.distanceTo(boss.g.position.clone().add(new THREE.Vector3(0,3.1,0)))<3.1){boss.hp--;damageNumber(10,boss.g.position.clone().add(new THREE.Vector3(0,2,0)),boss.hp<=0);burst(sh.m.position,12,0x77eaff,7);sh.life=0;tone(130,.12,'triangle',.03,130);if(boss.hp<=0)killBoss()}let hit=-1;for(let j=0;j<enemies.length;j++){let p=enemies[j].g.position;if(Math.hypot(sh.m.position.x-p.x,sh.m.position.z-p.z)<.56&&Math.abs(sh.m.position.y-(p.y+1.1))<1.1){hit=j;break}}if(hit>=0){let e=enemies[hit];e.hp--;damageNumber(25,e.g.position,e.hp<=0);burst(sh.m.position,12,0x6eefff,4);$('hit').style.opacity=1;hitTime=elapsed+.12;tone(700,.07,'sine',.025,-250);if(e.hp<=0){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),17,0x9cde59,6);scene.remove(e.g);enemies.splice(hit,1);kills++;score+=100;updateHud()}sh.life=0}if(sh.life<=0||Math.abs(sh.m.position.x)>108||Math.abs(sh.m.position.z)>108){scene.remove(sh.m);shots.splice(i,1)}}if(elapsed>hitTime)$('hit').style.opacity=0;
+for(let i=shots.length-1;i>=0;i--){const sh=shots[i];const previous=sh.m.position.clone();sh.m.position.addScaledVector(sh.v,dt);sh.life-=dt;const steps=Math.max(1,Math.ceil(sh.v.length()*dt/.35));for(let k=1;k<=steps;k++){const x=THREE.MathUtils.lerp(previous.x,sh.m.position.x,k/steps),z=THREE.MathUtils.lerp(previous.z,sh.m.position.z,k/steps);if(collide(x,z,.09)){sh.m.position.set(x,THREE.MathUtils.lerp(previous.y,sh.m.position.y,k/steps),z);burst(sh.m.position,7,0x73eaff,2.5);sh.life=0;break}}if(boss&&sh.m.position.distanceTo(boss.g.position.clone().add(new THREE.Vector3(0,3.1,0)))<3.1){boss.hp--;damageNumber(10,boss.g.position.clone().add(new THREE.Vector3(0,2,0)),boss.hp<=0);burst(sh.m.position,12,0x77eaff,7);sh.life=0;tone(130,.12,'triangle',.03,130);if(boss.hp<=0)killBoss()}let hit=-1;for(let j=0;j<enemies.length;j++){let p=enemies[j].g.position;if(Math.hypot(sh.m.position.x-p.x,sh.m.position.z-p.z)<1.05*enemies[j].scale&&Math.abs(sh.m.position.y-(p.y+1.1))<1.55*enemies[j].scale){hit=j;break}}if(hit>=0){let e=enemies[hit];e.hp--;damageNumber(25,e.g.position,e.hp<=0);burst(sh.m.position,12,0x6eefff,4);$('hit').style.opacity=1;hitTime=elapsed+.12;tone(700,.07,'sine',.025,-250);if(e.hp<=0){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),17,0x9cde59,6);scene.remove(e.g);enemies.splice(hit,1);kills++;score+=100;updateHud()}sh.life=0}if(sh.life<=0||Math.abs(sh.m.position.x)>108||Math.abs(sh.m.position.z)>108){scene.remove(sh.m);shots.splice(i,1)}}if(elapsed>hitTime)$('hit').style.opacity=0;
 for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.life-=dt;p.v.y-=13*dt;p.m.position.addScaledVector(p.v,dt);p.m.material.opacity=Math.max(0,p.life/p.max);if(p.life<=0){scene.remove(p.m);particles.splice(i,1)}}}
 
 

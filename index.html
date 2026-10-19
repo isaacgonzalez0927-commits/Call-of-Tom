@@ -72,44 +72,7 @@ function buildCastle(){const cx=castleX,cz=castleZ;
  mesh(new THREE.CylinderGeometry(1.4,1.4,.2,16),clockGold,cx,8.2,cz+1.0).rotation.x=Math.PI/2;
  for(let i=0;i<12;i++){const a=i*Math.PI/6;box(.1,.65,.1,castleDark,cx+Math.sin(a)*1.05,8.2+Math.cos(a)*1.05,cz+1.15)}
  for(let side of [-1,1])for(let i=0;i<3;i++){const z=cz-10+i*4;box(.2,1.8,1.2,windowGlass,cx+side*6.85,3.3,z)}
- // Main keep inside the courtyard: two floors, doorway and windows.
- castleBlock(cx-6,2.8,cz-6,1.5,5.6,12,castleDark);
- castleBlock(cx+6,2.8,cz-6,1.5,5.6,12,castleDark);
- castleBlock(cx,2.8,cz-12,12,5.6,1.5,castleDark);
- castleBlock(cx-4.5,2.8,cz,3,5.6,1.5,castleDark);
- castleBlock(cx+4.5,2.8,cz,3,5.6,1.5,castleDark);
- castleBlock(cx,5.4,cz,6,1,1.5,castleTrim,false);
- floorPlatform(cx,cz-6,12,12,5.9);
- for(let side of [-1,1])for(let i=0;i<3;i++)box(.65,1.3,.12,castleTrim,cx+side*6.85,2.7,cz-9+i*3);
- // Interactive courtyard fountain and supply station.
- const fountainBlue=new THREE.MeshStandardMaterial({color:0x54dfff,emissive:0x1588bb,emissiveIntensity:1,metalness:.15,roughness:.2});
- mesh(new THREE.CylinderGeometry(2.5,2.9,.7,12),castleTrim,cx+7,.35,cz+9);mesh(new THREE.CylinderGeometry(2.05,2.05,.12,12),fountainBlue,cx+7,.77,cz+9);mesh(new THREE.CylinderGeometry(.35,.5,2.3,10),castleStone,cx+7,1.6,cz+9);ball(.62,fountainBlue,cx+7,2.9,cz+9);castleInteractables.push({x:cx+7,z:cz+9,type:'heal'});
- castleBlock(cx-9,.8,cz+10,3,1.6,1.5,castleWood,false);for(let i=0;i<5;i++)box(.2,.85,.2,castleTrim,cx-10.1+i*.55,1.9,cz+10);castleInteractables.push({x:cx-9,z:cz+10,type:'ammo'});
- // Interactive castle training range, bell tower, treasure vault and campfire.
- const targetRed=mat(0xc44438),targetCream=mat(0xe9d6a5),treasureGold=mat(0xffd15e),fireMat=new THREE.MeshStandardMaterial({color:0xff9a28,emissive:0xff6200,emissiveIntensity:1.8});
- for(let i=0;i<3;i++){const z=cz-10+i*5;box(.35,3,.35,castleWood,cx+10,1.5,z);const disc=mesh(new THREE.CylinderGeometry(.8,.8,.16,18),targetCream,cx+10,2.3,z);disc.rotation.z=Math.PI/2;const bull=mesh(new THREE.CylinderGeometry(.32,.32,.18,18),targetRed,cx+9.88,2.3,z);bull.rotation.z=Math.PI/2}
- castleInteractables.push({x:cx+10,z:cz-5,type:'training'});
- const bell=mesh(new THREE.CylinderGeometry(.65,1.05,1.4,12),treasureGold,cx-11,4,cz-11);ball(.24,castleDark,cx-11,3.2,cz-11);box(.18,3,.18,castleWood,cx-11,5.4,cz-11);castleInteractables.push({x:cx-11,z:cz-11,type:'bell'});
- for(let i=0;i<4;i++){const x=cx-3+i*1.9,z=cz+10;box(1.5,.9,1.1,castleWood,x,.5,z);box(1.4,.12,1,treasureGold,x,1,z);box(.16,.6,1.14,treasureGold,x,.65,z)}
- castleInteractables.push({x:cx,z:cz+10,type:'treasure'});
- for(let i=0;i<8;i++){const a=i*Math.PI/4;box(.8,.5,.6,castleStone,cx+Math.cos(a)*1.25,.28,cz+3+Math.sin(a)*1.25)}
- const flame=mesh(new THREE.ConeGeometry(.7,1.6,8),fireMat,cx,1.15,cz+3);castleInteractables.push({x:cx,z:cz+3,type:'campfire',flame});
- // Weapon racks, bookshelves, storage barrels and a throne.
- for(let i=0;i<4;i++){const z=cz-11+i*3.3;box(.7,2.6,1.7,castleWood,cx-11,1.4,z);for(let j=0;j<3;j++)box(.8,.17,1.8,castleTrim,cx-11,.6+j*.75,z)}
- for(let i=0;i<5;i++){const x=cx-8+i*1.8;mesh(new THREE.CylinderGeometry(.52,.57,1.3,10),castleWood,x,.7,cz-13);mesh(new THREE.CylinderGeometry(.54,.54,.1,10),castleTrim,x,1.35,cz-13)}
- box(2,2.7,1.2,castleWood,cx,1.6,cz-10);box(2.7,.6,1.8,castleFlag,cx,.85,cz-9.8);for(const side of [-1,1])box(.4,1.2,1.8,treasureGold,cx+side*1.35,1.25,cz-9.8);
- // PvP-style cover layout: solid crates, climbable low platforms, firing positions and raised catwalk.
- const cover=mat(0x76553b),metalEdge=mat(0x303d48);
- for(const [x,z,w,h,d] of [[-3,cz+12,2.4,2,2.4],[4,cz+12,2.4,2,2.4],[-12,cz+2,2.6,1.5,2.6],[10,cz+2,2.8,1.7,2.8],[-4,cz-3,3,1.8,2.4],[3,cz-3,3,1.8,2.4],[-9,cz-9,2,2.1,2]]){solidBox(w,h,d,cover,x,h/2,z);for(const side of [-1,1]){box(.12,h+.05,.12,metalEdge,x+side*(w/2-.13),h/2,z+side*(d/2-.13))}box(w+.06,.12,d+.06,castleTrim,x,h+.06,z)}
- // Staircase leading to a real raised overlook at the back of the courtyard.
- for(let i=0;i<9;i++){const h=(i+1)*.42;box(3.1,.3,1.15,castleStone,cx-11,h-.15,cz-1-i*.92);castleStairs.push({x:cx-11,z:cz-1-i*.92,w:3.1,d:1.15,y:h})}
- floorPlatform(cx-11,cz-10,6,5,3.9);
- for(const side of [-1,1]){box(.2,1.1,5,castleTrim,cx-11+side*2.9,4.45,cz-10)}
- // Interior props: feast tables, benches, shields, banners, treasure and torches.
- const red=mat(0xa02f36),gold=mat(0xf0b944),iron=mat(0x3c4657);
- for(let z of [cz+5,cz-2]){castleBlock(cx-7,.85,z,3.8,.45,1.8,castleWood,false);for(let s of [-1,1])castleBlock(cx-7+s*1.45,.35,z, .25,.7,1.4,castleWood,false);for(let s of [-1,1])castleBlock(cx-7,.38,z+s*1.65,3.2,.45,.65,castleWood,false)}
- for(let z of [cz+7,cz-7]){castleBlock(cx+8,.55,z,2,1.1,1.3,castleWood,false);box(1.8,.13,1.1,gold,cx+8,1.14,z)}
- for(let side of [-1,1]){castleBlock(cx+side*13,4.3,cz+5,.12,3.2,1.6,red,false);mesh(new THREE.ConeGeometry(.35,.9,5),gold,cx+side*13,5.9,cz+5);for(let z of [cz+11,cz-11]){const torch=mesh(new THREE.ConeGeometry(.22,.65,6),gold,cx+side*13,2.7,z);torch.rotation.z=Math.PI}}
+ // Open, uncluttered courtyard: all internal structures, props and interactions removed.
  // Continuous staircase up to eastern battlements: broad 20 steps with no collision boxes.
  // The invisible walking height is calculated from position rather than relying on discrete step collisions.
  for(let i=0;i<20;i++){const y=(i+1)*.355,z=cz+12-i*.85;box(4.5,.28,1.05,castleTrim,cx+12.3,y-.14,z);castleStairs.push({x:cx+12.3,z,w:4.5,d:1.05,y})}
@@ -135,7 +98,7 @@ function spawnEnemy(){let a=Math.random()*Math.PI*2,d=20+Math.random()*24,x=play
 function burst(pos,count=12,color=0x58e9ff,force=5){for(let i=0;i<count;i++){const p=mesh(new THREE.IcosahedronGeometry(.045+Math.random()*.065,0),new THREE.MeshBasicMaterial({color,transparent:true,opacity:1}),pos.x,pos.y,pos.z);p.castShadow=false;let v=new THREE.Vector3((Math.random()-.5)*force,Math.random()*force*.8,(Math.random()-.5)*force);particles.push({m:p,v,life:.3+Math.random()*.5,max:.8})}}
 const upgradeLevels={multishot:0,damage:0,rapid:0,health:0,velocity:0,ammo:0};
 const upgradeInfo={multishot:['MULTI SHOT','+1 extra projectile per shot',4],damage:['WATER PRESSURE','+25% damage per level',5],rapid:['RAPID FIRE','Faster firing rate',5],health:['ARMOR PLATING','+20 max health and heal',5],velocity:['HYDRO SPEED','+12% movement speed',5],ammo:['AMMO CAPACITY','+10 shots per magazine',5]};
-let choosingUpgrade=false,upgradeMaxHealth=100;let reloadStart=0;const maxAmmo=()=>30+upgradeLevels.ammo*10;let sprinting=false,lastWPress=-10;
+let choosingUpgrade=false,upgradeMaxHealth=100;let reloadStart=0;let gunBaseX=.53,gunBaseY=-.55,gunBaseZ=-.94;const maxAmmo=()=>30+upgradeLevels.ammo*10;let sprinting=false,lastWPress=-10;
 const upgradeOverlay=document.createElement('div');upgradeOverlay.id='upgradeOverlay';upgradeOverlay.style.cssText='display:none;position:fixed;inset:0;background:rgba(4,12,25,.93);z-index:9000;align-items:center;justify-content:center;flex-direction:column;color:white;font-family:Arial,sans-serif;text-align:center;padding:24px';
 document.body.appendChild(upgradeOverlay);
 function offerUpgrades(){choosingUpgrade=true;paused=false;$('pause').style.display='none';keys.Mouse=false;keys.KeyF=false;document.exitPointerLock?.();upgradeOverlay.style.display='flex';const available=Object.keys(upgradeLevels).filter(k=>upgradeLevels[k]<upgradeInfo[k][2]);if(!available.length){choosingUpgrade=false;upgradeOverlay.style.display='none';startWave();return}available.sort(()=>Math.random()-.5);const choices=available.slice(0,3);upgradeOverlay.innerHTML='<h1 style="font-size:clamp(26px,5vw,48px);margin:0 0 12px">WAVE '+wave+' CLEARED</h1><p style="color:#9fe8ff;margin:0 0 25px">CHOOSE ONE PERMANENT UPGRADE</p>';const row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:15px;max-width:900px';for(const key of choices){const info=upgradeInfo[key],btn=document.createElement('button');btn.style.cssText='cursor:pointer;background:linear-gradient(160deg,#155c88,#082b52);color:white;border:2px solid #5cd7ff;border-radius:16px;padding:25px 20px;width:240px;min-height:160px;font-size:17px';btn.innerHTML='<strong style="font-size:22px">'+info[0]+'</strong><p>'+info[1]+'</p><small>LEVEL '+upgradeLevels[key]+' / '+info[2]+'</small>';btn.onclick=()=>{upgradeLevels[key]++;if(key==='ammo')ammo+=10;if(key==='health'){upgradeMaxHealth+=20;hp=Math.min(upgradeMaxHealth,hp+35)}choosingUpgrade=false;paused=false;upgradeOverlay.style.display='none';startWave();updateHud();lock()};row.appendChild(btn)}upgradeOverlay.appendChild(row)}
@@ -163,8 +126,7 @@ function fire(){
  for(const t of targets){const to=t.pos.clone().sub(viewOrigin),along=to.dot(viewDirection);if(along<0||along>best)continue;const miss=to.clone().addScaledVector(viewDirection,-along).length();if(miss<t.radius){const enter=along-Math.sqrt(Math.max(0,t.radius*t.radius-miss*miss));if(enter<best){best=Math.max(1,enter);target.copy(viewOrigin).addScaledVector(viewDirection,best)}}}
  // Check map obstacle boxes on the same line so walls take priority over enemies.
  for(let d=.3;d<best;d+=.35){const p=viewOrigin.clone().addScaledVector(viewDirection,d);if(p.y>=0&&p.y<8&&collide(p.x,p.z,.07)){target.copy(p);break}}
- const origin=thirdPerson?player.clone().add(new THREE.Vector3(Math.cos(yaw)*.42,-.42,-Math.sin(yaw)*.42)):camera.position.clone().add(new THREE.Vector3(0,-.23,0));
- origin.addScaledVector(viewDirection,thirdPerson?.8:.5);
+ gun.updateWorldMatrix(true,false);const origin=thirdPerson?player.clone().add(new THREE.Vector3(Math.cos(yaw)*.42,-.42,-Math.sin(yaw)*.42)):gun.localToWorld(new THREE.Vector3(0,-.105,gunParts.muzzleZ||-1.72));
  const direction=target.clone().sub(origin).normalize();
  const m=mesh(new THREE.SphereGeometry(.095,8,6),new THREE.MeshBasicMaterial({color:0x6ceeff}),origin.x,origin.y,origin.z);m.castShadow=false;
  shots.push({m,v:direction.multiplyScalar(65),life:1.7});// Fan spread: all pellets leave the same muzzle and diverge in fixed angles, like the player's sketch.
@@ -204,7 +166,7 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spa
  for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.9&&keys.KeyW&&player.y<1.7+ladder.top+.05){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5);verticalVelocity=0;grounded=false;climbing=true;break}}
  if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y>=1.7+stairRise-1.05&&player.y<floor+.5&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
-updatePickups(dt);walk+=moving?dt*(keys.ShiftLeft?15:10):dt*2;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*.045:Math.sin(walk)*.012;camera.position.y-=slideTime>0?.65:0;}camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,slideTime>0?Math.sin(elapsed*6)*.035:0);shake=Math.max(0,shake-dt*.7);gun.position.set(THREE.MathUtils.lerp(.53,.29,aimBlend)+Math.sin(walk)*.004,THREE.MathUtils.lerp(-.55,-.76,aimBlend)+Math.abs(Math.sin(walk))*(moving?.012:0)-shake*.25,THREE.MathUtils.lerp(-.94,-.85,aimBlend)+shake*.18);gun.scale.setScalar(.72);gun.rotation.x=-shake*.35;gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
+updatePickups(dt);walk+=moving&&grounded?dt*(sprinting?14:9):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*(sprinting?.065:.033):0;camera.position.y-=slideTime>0?.65:0;}camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,slideTime>0?Math.sin(elapsed*6)*.035:0);shake=Math.max(0,shake-dt*.7);gunBaseX=THREE.MathUtils.lerp(.53,.29,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.76,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.85,aimBlend);gun.position.set(gunBaseX,gunBaseY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
 if(boss)updateBoss(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;offerUpgrades()}}
 for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],g=e.g,dx=player.x-g.position.x,dz=player.z-g.position.z,dist=Math.max(.01,Math.hypot(dx,dz)),ux=dx/dist,uz=dz/dist;g.rotation.y=Math.atan2(dx,dz);const gait=e.archer?4:10;g.position.y=Math.sin(elapsed*gait+e.phase)*.055;g.rotation.z=Math.sin(elapsed*gait+e.phase)*.045;
  if(elapsed>e.think){e.think=elapsed+.7+Math.random()*.45;if(Math.random()<.3)e.strafe*=-1}
@@ -246,7 +208,7 @@ function killBoss(){if(!boss)return;for(const w of boss.shockwaves){scene.remove
 
 
 // Reload animation: blaster dips and rolls while the glowing water tank refills.
-function animateGunReload(dt){const t=reloading?THREE.MathUtils.clamp((elapsed-reloadStart)/1.35,0,1):0;const dip=reloading?Math.sin(Math.PI*t)*.3:0;const twist=reloading?Math.sin(Math.PI*t)*.45:0;gun.position.y=THREE.MathUtils.damp(gun.position.y,-.43-dip,15,dt);gun.position.x=THREE.MathUtils.damp(gun.position.x,.48+(reloading?.12:0),12,dt);gun.rotation.z=THREE.MathUtils.damp(gun.rotation.z,twist,14,dt);gun.rotation.x=THREE.MathUtils.damp(gun.rotation.x,reloading?Math.sin(Math.PI*t)*-.35:0,12,dt);if(reloading&&t>.25&&t<.85&&Math.random()<dt*10){const p=gun.getWorldPosition(new THREE.Vector3());burst(p,1,0x66eaff,1)}}
+function animateGunReload(dt){const t=reloading?THREE.MathUtils.clamp((elapsed-reloadStart)/1.35,0,1):0;const dip=reloading?Math.sin(Math.PI*t)*.3:0;const twist=reloading?Math.sin(Math.PI*t)*.45:0;gun.position.y=gunBaseY-dip;gun.position.x=gunBaseX+(reloading?.12:0);gun.rotation.z=THREE.MathUtils.damp(gun.rotation.z,twist,14,dt);gun.rotation.x=THREE.MathUtils.damp(gun.rotation.x,reloading?Math.sin(Math.PI*t)*-.35:0,12,dt);if(reloading&&t>.25&&t<.85&&Math.random()<dt*10){const p=gun.getWorldPosition(new THREE.Vector3());burst(p,1,0x66eaff,1)}}
 /* High-detail blaster assembly: layered housing, tanks, ribs, sight and glow. */
 const cobalt=mat(0x0755b8,.22,.55),navy=mat(0x09253e,.3,.5),orange=mat(0xff7b1b,.28,.2),steel=mat(0xc8d7e5,.18,.82),rubber=mat(0x152e40,.8),aqua=new THREE.MeshStandardMaterial({color:0x58efff,emissive:0x0088bb,emissiveIntensity:1.4,metalness:.2,roughness:.18,transparent:true,opacity:.88});
 function cylinder(radius,height,m,x,y,z,parent=gun,rotX=Math.PI/2){const obj=mesh(new THREE.CylinderGeometry(radius,radius,height,16),m,x,y,z,parent);obj.rotation.x=rotX;return obj}

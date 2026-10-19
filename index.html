@@ -98,6 +98,13 @@ function buildCastle(){const cx=castleX,cz=castleZ;
  for(let i=0;i<4;i++){const z=cz-11+i*3.3;box(.7,2.6,1.7,castleWood,cx-11,1.4,z);for(let j=0;j<3;j++)box(.8,.17,1.8,castleTrim,cx-11,.6+j*.75,z)}
  for(let i=0;i<5;i++){const x=cx-8+i*1.8;mesh(new THREE.CylinderGeometry(.52,.57,1.3,10),castleWood,x,.7,cz-13);mesh(new THREE.CylinderGeometry(.54,.54,.1,10),castleTrim,x,1.35,cz-13)}
  box(2,2.7,1.2,castleWood,cx,1.6,cz-10);box(2.7,.6,1.8,castleFlag,cx,.85,cz-9.8);for(const side of [-1,1])box(.4,1.2,1.8,treasureGold,cx+side*1.35,1.25,cz-9.8);
+ // PvP-style cover layout: solid crates, climbable low platforms, firing positions and raised catwalk.
+ const cover=mat(0x76553b),metalEdge=mat(0x303d48);
+ for(const [x,z,w,h,d] of [[-3,cz+12,2.4,2,2.4],[4,cz+12,2.4,2,2.4],[-12,cz+2,2.6,1.5,2.6],[10,cz+2,2.8,1.7,2.8],[-4,cz-3,3,1.8,2.4],[3,cz-3,3,1.8,2.4],[-9,cz-9,2,2.1,2]]){solidBox(w,h,d,cover,x,h/2,z);for(const side of [-1,1]){box(.12,h+.05,.12,metalEdge,x+side*(w/2-.13),h/2,z+side*(d/2-.13))}box(w+.06,.12,d+.06,castleTrim,x,h+.06,z)}
+ // Staircase leading to a real raised overlook at the back of the courtyard.
+ for(let i=0;i<9;i++){const h=(i+1)*.42;box(3.1,.3,1.15,castleStone,cx-11,h-.15,cz-1-i*.92);castleStairs.push({x:cx-11,z:cz-1-i*.92,w:3.1,d:1.15,y:h})}
+ floorPlatform(cx-11,cz-10,6,5,3.9);
+ for(const side of [-1,1]){box(.2,1.1,5,castleTrim,cx-11+side*2.9,4.45,cz-10)}
  // Interior props: feast tables, benches, shields, banners, treasure and torches.
  const red=mat(0xa02f36),gold=mat(0xf0b944),iron=mat(0x3c4657);
  for(let z of [cz+5,cz-2]){castleBlock(cx-7,.85,z,3.8,.45,1.8,castleWood,false);for(let s of [-1,1])castleBlock(cx-7+s*1.45,.35,z, .25,.7,1.4,castleWood,false);for(let s of [-1,1])castleBlock(cx-7,.38,z+s*1.65,3.2,.45,.65,castleWood,false)}
@@ -185,6 +192,10 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spa
  let floor=1.7;
  for(const o of mantleSurfaces){if(Math.abs(player.x-o.x)<o.w/2-.2&&Math.abs(player.z-o.z)<o.d/2-.2&&player.y>=1.7+o.top-.2)floor=Math.max(floor,1.7+o.top)}
  for(const p of castleFloors){if(Math.abs(player.x-p.x)<p.w/2-.08&&Math.abs(player.z-p.z)<p.d/2-.08&&player.y>=1.7+p.y-.38)floor=Math.max(floor,1.7+p.y)}
+ // Second courtyard staircase has its own climb height and allows passage underneath.
+ const secondaryRise=THREE.MathUtils.clamp((castleZ-.35-player.z)/7.8,0,1)*3.9;
+ const secondaryStairs=Math.abs(player.x-(castleX-11))<1.5&&player.z<castleZ-.35&&player.z>castleZ-8.6&&(player.y>=1.7+secondaryRise-.85||player.y>3.8);
+ if(secondaryStairs)floor=Math.max(floor,1.7+secondaryRise);
  // Stairway rises smoothly as the player walks inward; no individual step collider can snag them.
  const stairStart=castleZ+12.6,stairEnd=castleZ-4.7;
  const stairRise=THREE.MathUtils.clamp((stairStart-player.z)/(stairStart-stairEnd),0,1)*7.1;const onStairs=Math.abs(player.x-(castleX+12.3))<2.15&&player.z<=stairStart&&player.z>=stairEnd&&(player.y>=1.7+stairRise-1.05||player.y>5.8);

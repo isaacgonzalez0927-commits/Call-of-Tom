@@ -139,29 +139,50 @@ function castleBlock(x,y,z,w,h,d,m=castleStone,solid=true){const o=box(w,h,d,m,x
 function floorPlatform(x,z,w,d,y){box(w,.4,d,castleTrim,x,y-.2,z);castleFloors.push({x,z,w,d,y})}
 const castleInteractables=[];let castleUseCooldown=0;
 function buildCastle(){const cx=castleX,cz=castleZ;
- // Empty, unobstructed courtyard with only functional traversal props.
+ // Castle occupies a clear 40 x 40 site, with the open gate facing the island center.
  castleBlock(cx-17,3.5,cz,2.5,7,34);
  castleBlock(cx+17,3.5,cz,2.5,7,34);
  castleBlock(cx,3.5,cz-17,34,7,2.5);
  castleBlock(cx-11,3.5,cz+17,12,7,2.5);
  castleBlock(cx+11,3.5,cz+17,12,7,2.5);
- floorPlatform(cx-14.8,cz-11,5,10,5);
- floorPlatform(cx+14.8,cz-11,5,10,5);
- // Wide, low boxes: registered as mantle surfaces, not impassable decorative obstacles.
- for(const [x,z,w,h,d] of [[cx-7,cz+5,3,1.3,3],[cx-3,cz+5,3,1.8,3],[cx+2,cz+3,4,2.1,3],[cx+7,cz-4,3,1.5,3],[cx-8,cz-7,4,2.5,4],[cx+5,cz+10,3,1.1,3]]){
-   solidBox(w,h,d,castleWood,x,h/2,z);
-   box(w+.12,.14,d+.12,castleTrim,x,h+.07,z);
+ // Open gateway: 10 studs wide, with a decorative arch lintel above.
+ castleBlock(cx,7.7,cz+17,11,1.2,2.5,castleTrim,false);
+ for(let side of [-1,1]){castleBlock(cx+side*5.4,4.3,cz+17,1,8.6,3,castleDark,false);castleBlock(cx+side*17,7.1,cz,2.7,.6,34,castleTrim,false)}
+ // Walkable rampart platforms, parapets and crenellations.
+ floorPlatform(cx-15,cz,3.7,32,7.1);floorPlatform(cx+15,cz,3.7,32,7.1);
+ floorPlatform(cx,cz-15,31,3.7,7.1);floorPlatform(cx-11,cz+15,9,3.7,7.1);floorPlatform(cx+11,cz+15,9,3.7,7.1);
+ for(let side of [-1,1])for(let i=-6;i<=6;i++){if(i%2===0){castleBlock(cx+side*17,8.1,cz+i*2.4,2.5,1.5,1.5,castleTrim,false);castleBlock(cx+i*2.4,8.1,cz+side*17,1.5,1.5,2.5,castleTrim,false)}}
+ // Corner towers: layered stone shafts, balconies, banners and roofs.
+ for(let sx of [-1,1])for(let sz of [-1,1]){const x=cx+sx*16,z=cz+sz*16;mesh(new THREE.CylinderGeometry(3.2,3.7,11.5,10),castleStone,x,5.75,z);obstacle(x,z,5.7,5.7);for(let h of [2.1,4.2,6.3,8.4])mesh(new THREE.CylinderGeometry(3.55,3.55,.2,10),castleTrim,x,h,z);floorPlatform(x,z,6.8,6.8,11.7);mesh(new THREE.ConeGeometry(4.25,3.5,10),castleDark,x,15.4,z);for(let k=0;k<8;k++){const a=k*Math.PI/4;castleBlock(x+Math.sin(a)*3.3,12,z+Math.cos(a)*3.3,.7,.9,.7,castleTrim,false)}}
+ // Elevated central great-hall roof, illuminated stained-glass windows, drawbridge and stone road.
+ const copper=mat(0x30596a,.4,.3),warm=mat(0xffc56d,.5),marble=mat(0xd8d4ca),banner=mat(0x973449),clockGold=mat(0xeac35b),windowGlass=mat(0x6bd5e6,.2);
+ for(let i=0;i<11;i++){const z=cz+21+i*2.7;box(9,.12,2.3,castleTrim,cx,.06,z)}
+ for(let side of [-1,1]){const x=cx+side*5.2;for(let i=0;i<5;i++){box(.28,3,.28,castleTrim,x,2,cz+14-i*3.4);box(1.3,2.1,.15,banner,x,5,cz+14-i*3.4)}}
+ // Raised bridge parapets frame the entry and make the approach unmistakable.
+ for(let side of [-1,1]){box(.75,1.4,13,castleStone,cx+side*5.5,.7,cz+23);for(let i=0;i<5;i++)box(.8,.6,.8,castleTrim,cx+side*5.5,1.6,cz+18+i*2.6)}
+ // Glowing wall-mounted lanterns and arrow slits.
+ for(let side of [-1,1])for(let i=0;i<5;i++){const z=cz-11+i*5;box(.24,1.4,.62,castleDark,cx+side*17,3.8,z);ball(.3,warm,cx+side*15.6,4.2,z)}
+ // Grand keep roof with gabled silhouette, finials and a clock.
+ mesh(new THREE.ConeGeometry(10,5,4),copper,cx,9.2,cz-6).rotation.y=Math.PI/4;
+ mesh(new THREE.CylinderGeometry(1.4,1.4,.2,16),clockGold,cx,8.2,cz+1.0).rotation.x=Math.PI/2;
+ for(let i=0;i<12;i++){const a=i*Math.PI/6;box(.1,.65,.1,castleDark,cx+Math.sin(a)*1.05,8.2+Math.cos(a)*1.05,cz+1.15)}
+ for(let side of [-1,1])for(let i=0;i<3;i++){const z=cz-10+i*4;box(.2,1.8,1.2,windowGlass,cx+side*6.85,3.3,z)}
+
+ // Courtyard remains clear except for reliable climbable boxes, stairs and ladders.
+ for(const [x,z,w,height,d] of [[cx-7,cz+5,3,1.3,3],[cx-3,cz+5,3,1.8,3],[cx+2,cz+3,4,2.1,3],[cx+7,cz-4,3,1.5,3],[cx-8,cz-7,4,2.5,4]]){
+   solidBox(w,height,d,castleWood,x,height/2,z);
+   box(w+.1,.1,d+.1,castleTrim,x,height+.05,z);
  }
- // Broad continuous staircase with matching invisible walking surface.
- for(let i=0;i<15;i++){const y=(i+1)*.34,z=cz+12-i*1.3;box(5,.25,1.35,castleTrim,cx+11,y-.125,z);castleStairs.push({x:cx+11,z,w:5,d:1.35,y})}
- floorPlatform(cx+11,cz-7,6,5,5.1);
- // Climbable ladders with rungs and safe top platforms.
- for(const [x,z,top] of [[cx-13,cz+5,5],[cx+13,cz+5,5]]){
-  castleLadders.push({x,z,top});
-  floorPlatform(x,z-1.5,4,4,top);
-  for(let i=0;i<Math.ceil(top/.38);i++)box(1.35,.10,.17,castleWood,x,.3+i*.38,z);
-  for(const side of [-1,1])box(.12,top,.2,castleTrim,x+side*.76,top/2,z);
+ // Stair treads and walking ramp share identical dimensions and slope.
+ for(let i=0;i<20;i++){const y=(i+1)*.355,z=cz+12-i*.85;box(4.5,.28,1.05,castleTrim,cx+12.3,y-.14,z);castleStairs.push({x:cx+12.3,z,w:4.5,d:1.05,y})}
+ floorPlatform(cx+12.3,cz-5,6,4,7.1);
+ // Ladders placed in open courtyard, with reachable exit platforms.
+ for(const [x,z,top] of [[cx-10,cz+7,4.5],[cx+7,cz+7,5.5]]){
+   castleLadders.push({x,z,top});floorPlatform(x,z-1.5,4,4,top);
+   for(let i=0;i<Math.ceil(top/.38);i++)box(1.2,.11,.17,castleWood,x,.3+i*.38,z);
+   for(let side of [-1,1])box(.12,top,.2,castleWood,x+side*.7,top/2,z);
  }
+ for(let side of [-1,1]){box(.15,4.8,.15,castleWood,cx+side*11,10,cz-15);box(2.6,1.5,.08,castleFlag,cx+side*11+1.3,11.2,cz-15)}
 }
 buildCastle();
 const pickups=[];
@@ -315,17 +336,17 @@ function startMantle(){if(campaignMode&&realtimeServerUrl)return false;
  let best=null,bestScore=Infinity;
  for(const s of mantleSurfaces){
   const feet=player.y-1.7,height=s.top-feet;
-  if(height<-.1||height>3.25||s.w<1||s.d<1)continue;
+  if(height<-.15||height>3.25||s.w<1||s.d<1)continue;
   const halfW=s.w/2,halfD=s.d/2;
   const nx=THREE.MathUtils.clamp(player.x,s.x-halfW,s.x+halfW);
   const nz=THREE.MathUtils.clamp(player.z,s.z-halfD,s.z+halfD);
   const distance=Math.hypot(nx-player.x,nz-player.z);
-  if(distance>2.15)continue;
+  if(distance>1.8)continue;
   const approach=(nx-player.x)*forward.x+(nz-player.z)*forward.z;
-  if(approach<-.65)continue;
+  if(approach<-.1)continue;
   // Landing must be well inside the upper surface, not inside the wall.
-  const landX=THREE.MathUtils.clamp(nx+forward.x*.95,s.x-halfW+.48,s.x+halfW-.48);
-  const landZ=THREE.MathUtils.clamp(nz+forward.z*.95,s.z-halfD+.48,s.z+halfD-.48);
+  const landX=THREE.MathUtils.clamp(nx+forward.x*1.1,s.x-halfW+.55,s.x+halfW-.55);
+  const landZ=THREE.MathUtils.clamp(nz+forward.z*1.1,s.z-halfD+.55,s.z+halfD-.55);
   const score=distance+height*.06;
   if(score<bestScore){bestScore=score;best={start:player.clone(),end:new THREE.Vector3(landX,1.7+s.top,landZ),t:0,duration:.42+height*.07}}
  }
@@ -369,12 +390,12 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if
  const secondaryStairs=Math.abs(player.x-(castleX-11))<1.5&&player.z<castleZ-.35&&player.z>castleZ-8.6&&(player.y>=1.7+secondaryRise-.85||player.y>3.8);
  if(secondaryStairs)floor=Math.max(floor,1.7+secondaryRise);
  // Stairway rises smoothly as the player walks inward; no individual step collider can snag them.
- const stairStart=castleZ+12.6,stairEnd=castleZ-4.7;
- const stairRise=THREE.MathUtils.clamp((stairStart-player.z)/(stairStart-stairEnd),0,1)*7.1;const onStairs=Math.abs(player.x-(castleX+12.3))<2.15&&player.z<=stairStart&&player.z>=stairEnd&&(player.y>=1.7+stairRise-1.05||player.y>5.8);
+ const stairStart=castleZ+12.5,stairEnd=castleZ-4.6;
+ const stairRise=THREE.MathUtils.clamp((stairStart-player.z)/(stairStart-stairEnd),0,1)*7.1;const onStairs=Math.abs(player.x-(castleX+12.3))<2.35&&player.z<=stairStart&&player.z>=stairEnd;
  if(onStairs){floor=Math.max(floor,1.7+stairRise)}
  let climbing=false;
- for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.9&&keys.KeyW&&player.y<1.7+ladder.top+.05){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5);verticalVelocity=0;grounded=false;climbing=true;break}}
- if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y>=1.7+stairRise-1.05&&player.y<floor+.5&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
+ for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.45&&keys.KeyW&&player.y<1.7+ladder.top+.05){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5.5);if(player.y>=1.7+ladder.top-.12){player.z=ladder.z-1.25;player.y=1.7+ladder.top;grounded=true}else grounded=false;verticalVelocity=0;climbing=true;break}}
+ if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y<floor+1.3&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
 updatePickups(dt);walk+=moving&&grounded?dt*(actualSpeed*.92+3):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*THREE.MathUtils.clamp(actualSpeed/13,0,1)*.105:0;slideCameraDrop=THREE.MathUtils.damp(slideCameraDrop,slideTime>0?.65:0,slideTime>0?9:5,dt);camera.position.y-=slideCameraDrop;}camera.rotation.order='YXZ';slideCameraRoll=THREE.MathUtils.damp(slideCameraRoll,slideTime>0?Math.sin(elapsed*6)*.025:0,7,dt);camera.rotation.set(pitch,yaw,slideCameraRoll);shake=Math.max(0,shake-dt*.7);const bobStrength=grounded?THREE.MathUtils.clamp(actualSpeed/13,0,1):0;gunBobX=THREE.MathUtils.damp(gunBobX,Math.cos(walk*.5)*.033*bobStrength,10,dt);gunBobY=THREE.MathUtils.damp(gunBobY,Math.sin(walk)*.075*bobStrength,10,dt);gunBobRoll=THREE.MathUtils.damp(gunBobRoll,Math.cos(walk*.5)*.018*bobStrength,9,dt);gunBaseX=THREE.MathUtils.lerp(.53,0,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.51,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.79,aimBlend);gun.position.set(gunBaseX+gunBobX,gunBaseY+gunBobY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
 if(boss&&!(campaignMode&&realtimeServerUrl))updateBoss(dt);if(!(campaignMode&&realtimeServerUrl))updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(!(campaignMode&&realtimeServerUrl)&&spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!(campaignMode&&realtimeServerUrl)&&!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(campaignMode)finishCampaignStage();else offerUpgrades()}}

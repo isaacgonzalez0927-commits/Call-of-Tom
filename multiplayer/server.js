@@ -13,7 +13,7 @@ const publicSquad=s=>({code:s.code,host:s.host,status:s.status,stage:s.stage,pla
 function broadcast(s,obj){for(const p of s.players.values())send(p.ws,obj)}
 function state(s){broadcast(s,{type:'state',squad:publicSquad(s)})}
 function spawnLevel(s,level){
- s.stage=level;s.status='playing';s.enemies.clear();s.boss=null;s.spawnLeft=levels[level].count;s.spawnTime=0;s.nextId=0;s.started=Date.now();s.last=Date.now();
+ s.stage=level;s.status='playing';s.enemies.clear();s.boss=null;s.bossDefeated=false;s.spawnLeft=levels[level].count;s.spawnTime=0;s.nextId=0;s.started=Date.now();s.last=Date.now();
  for(const p of s.players.values()){p.hp=100;p.x=0;p.z=0;p.lastShot=0}
  state(s);broadcast(s,{type:'level',level,name:levels[level].name})
 }
@@ -67,7 +67,7 @@ wss.on('connection',ws=>{
     if(t>0&&t<35&&perp<1.25&&t<dist){best=e;dist=t}
    }
    if(best){best.hp--;broadcast(s,{type:'hit',enemy:best.id,x:best.x,z:best.z,hp:best.hp});if(best.hp<=0){s.enemies.delete(best.id);broadcast(s,{type:'kill',enemy:best.id})}}
-   else if(s.boss){const e=s.boss,ex=e.x-p.x,ez=e.z-p.z,t=ex*ux+ez*uz;if(t>0&&t<42&&Math.abs(ex*uz-ez*ux)<4){e.hp--;broadcast(s,{type:'bossHit',hp:e.hp});if(e.hp<=0){s.boss=null;broadcast(s,{type:'bossDead'})}}}
+   else if(s.boss){const e=s.boss,ex=e.x-p.x,ez=e.z-p.z,t=ex*ux+ez*uz;if(t>0&&t<42&&Math.abs(ex*uz-ez*ux)<4){e.hp--;broadcast(s,{type:'bossHit',hp:e.hp});if(e.hp<=0){s.boss=null;s.bossDefeated=true;broadcast(s,{type:'bossDead'})}}}
   }
  });
  ws.on('close',()=>{const info=clients.get(ws);if(!info)return;const {s,p}=info;clients.delete(ws);s.players.delete(p.id);if(s.host===p.id)s.host=s.players.keys().next().value;if(!s.players.size)endSquad(s);else{if(s.status==='playing')s.status='failed';state(s)}});
@@ -103,7 +103,6 @@ setInterval(()=>{
    if(s.stage===3){s.status='won';broadcast(s,{type:'victory'});state(s)}
    else spawnLevel(s,s.stage+1);
   }
-  if(s.stage===3&&s.boss===null&&s.bossDefeated===false)s.bossDefeated=true;
   broadcast(s,{type:'snapshot',players:[...s.players.values()].map(p=>({id:p.id,x:p.x,z:p.z,hp:p.hp})),enemies:[...s.enemies.values()].map(e=>({id:e.id,x:e.x,z:e.z,hp:e.hp,type:e.type})),boss:s.boss,stage:s.stage,spawnLeft:s.spawnLeft});
  }
 },100);

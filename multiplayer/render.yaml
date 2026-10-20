@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: call-of-tom-multiplayer
+    runtime: node
+    plan: free
+    rootDir: multiplayer
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://calloftom.vercel.app

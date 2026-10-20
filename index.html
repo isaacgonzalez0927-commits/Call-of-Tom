@@ -173,21 +173,35 @@ const pickups=[];
 
 // Sparse coastal cliffs, layered stone outcrops and tropical patches inspired by the title art.
 const cliffBase=mat(0x7c786f),cliffLight=mat(0xb4a48a),moss=mat(0x638d50),sandPatch=mat(0xd3bd92);
-for(let i=0;i<18;i++){const a=(i+.25)*Math.PI*2/18,r=60+rand()*8,x=Math.cos(a)*r,z=Math.sin(a)*r;if(clearCastleGround(x,z))continue;
- const h=1.2+rand()*2.2,rad=1.6+rand()*2.5;
- const cliff=mesh(new THREE.CylinderGeometry(rad*.68,rad,h,6),i%3?cliffBase:cliffLight,x,h*.43,z);cliff.rotation.y=rand()*6.28;
- const cap=mesh(new THREE.CylinderGeometry(rad*.8,rad*.86,.18,6),moss,x,h*.86,z);cap.rotation.y=cliff.rotation.y;
- // No invisible walls: coast scenery is decorative.
+// Sculpted stepped coastal ridges: uneven faceted rock masses, grassy shelves and exposed stone.
+for(let i=0;i<23;i++){
+ const a=(i+.2)*Math.PI*2/23,r=55+rand()*13,x=Math.cos(a)*r,z=Math.sin(a)*r;
+ if(clearCastleGround(x,z))continue;
+ const h=2.3+rand()*4.4,rad=2.2+rand()*2.7,segments=6+Math.floor(rand()*3);
+ const ridge=new THREE.Group();ridge.position.set(x,0,z);ridge.rotation.y=rand()*6.28;scene.add(ridge);
+ for(let layer=0;layer<3;layer++){
+  const k=1-layer*.21,y=h*(.14+layer*.27),geo=new THREE.CylinderGeometry(rad*k*(.82+rand()*.2),rad*k*1.18,h*.43,segments,1);
+  const stone=mesh(geo,layer%2?cliffLight:cliffBase,(rand()-.5)*.3,y,(rand()-.5)*.3,ridge);
+  stone.rotation.y=rand()*2;
+ }
+ const top=mesh(new THREE.CylinderGeometry(rad*.53,rad*.7,.3,segments),moss,0,h*.92,0,ridge);
+ for(let j=0;j<3;j++){const a=j*2.1+rand(),rr=rad*(.3+rand()*.6);const shelf=mesh(new THREE.DodecahedronGeometry(.6+rand()*.6,0),j%2?cliffBase:cliffLight,Math.cos(a)*rr,h*(.25+j*.17),Math.sin(a)*rr,ridge);shelf.scale.set(1.2,.45,.8)}
 }
-for(let i=0;i<28;i++){const a=rand()*Math.PI*2,r=15+rand()*48,x=Math.cos(a)*r,z=Math.sin(a)*r;if(clearCastleGround(x,z))continue;const patch=mesh(new THREE.CylinderGeometry(.9+rand()*1.2,.9+rand()*1.2,.035,7),i%3?moss:sandPatch,x,.145,z);patch.rotation.y=rand()*6.28}
-function chocolateBowl(x,z){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const brown=mat(0x63301b,.42),gloss=mat(0x8c4929,.28),dark=mat(0x422015,.55);
- // Oversized cartoon poop swirl: broad base, stacked tapering coils and pointed tip.
- const base=mesh(new THREE.SphereGeometry(.88,10,7),brown,0,.58,0,g);base.scale.set(1,.48,.92);
- for(let j=0;j<3;j++){const r=.72-j*.2,h=.83+j*.38;const coil=mesh(new THREE.TorusGeometry(r,.2-j*.026,7,20),j%2?gloss:brown,0,h,0,g);coil.rotation.x=Math.PI/2;coil.scale.z=.9}
- const middle=mesh(new THREE.SphereGeometry(.52,9,6),brown,0,1.05,0,g);middle.scale.set(1,.62,.88);
- const top=mesh(new THREE.ConeGeometry(.37,.77,9),gloss,.13,1.6,0,g);top.rotation.z=-.23;
- ball(.095,gloss,-.28,1.14,.38,g);ball(.07,gloss,.27,.63,.58,g);
- pickups.push({g,available:true,respawn:0})}
+for(let i=0;i<38;i++){const a=rand()*Math.PI*2,r=14+rand()*48,x=Math.cos(a)*r,z=Math.sin(a)*r;if(clearCastleGround(x,z))continue;const patch=mesh(new THREE.CylinderGeometry(.6+rand()*1.3,.8+rand()*1.3,.035,7),i%4?moss:sandPatch,x,.145,z);patch.rotation.y=rand()*6.28}
+function chocolateBowl(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+ const cocoa=mat(0x65311d,.28),highlight=mat(0x98502d,.22),shade=mat(0x492315,.5),shine=mat(0xd58c58,.18);
+ // Sculpted continuous tapered spiral, instead of disconnected torus rings.
+ const curvePts=[];for(let i=0;i<=72;i++){const t=i/72,angle=t*Math.PI*5.2,r=(.84-t*.7)*(1-.12*t);curvePts.push(new THREE.Vector3(Math.cos(angle)*r,.45+t*1.4,Math.sin(angle)*r*.84))}
+ const curve=new THREE.CatmullRomCurve3(curvePts);
+ const base=mesh(new THREE.SphereGeometry(.95,16,12),cocoa,0,.45,0,g);base.scale.set(1,.52,.88);
+ const lower=mesh(new THREE.SphereGeometry(.73,14,10),highlight,0,.78,0,g);lower.scale.set(1,.62,.85);
+ mesh(new THREE.TubeGeometry(curve,72,.18,7,false),cocoa,0,0,0,g);
+ const peak=mesh(new THREE.ConeGeometry(.22,.57,9),highlight,.07,1.95,.03,g);peak.rotation.z=-.23;
+ const glint=mesh(new THREE.SphereGeometry(.16,8,6),shine,-.32,1.02,.55,g);glint.scale.set(1,.38,.2);
+ for(let i=0;i<3;i++){const a=i*2.1;const fleck=mesh(new THREE.SphereGeometry(.09,7,5),shade,Math.cos(a)*.6,.45,Math.sin(a)*.53,g);fleck.scale.set(1,.45,.45)}
+ pickups.push({g,available:true,respawn:0})
+}
 for(const [x,z] of [[-8,0],[22,14],[-28,-13],[29,-24],[-8,-42],[38,39]])chocolateBowl(x,z);
 let speedBoostUntil=0,pickupMessageUntil=0;
 function updatePickups(dt){for(const p of pickups){if(!p.available){if(elapsed>=p.respawn){p.available=true;p.g.visible=true}continue}p.g.rotation.y+=dt*.35;if(Math.hypot(player.x-p.g.position.x,player.z-p.g.position.z)<1.6){p.available=false;p.g.visible=false;p.respawn=elapsed+25;hp=Math.min(upgradeMaxHealth,hp+35);speedBoostUntil=elapsed+9;notice('CHOCOLATE POWER! +35 HP · SPEED BOOST 9s',2);tone(280,.13,'triangle',.065,-190);tone(620,.19,'sine',.045,260);setTimeout(()=>tone(920,.12,'sine',.03,-250),80);burst(p.g.position.clone().add(new THREE.Vector3(0,1.2,0)),12,0xd7a166,3);updateHud()}}}
@@ -464,17 +478,38 @@ function launchTitanAxe(b){
  const target=player.clone().add(new THREE.Vector3(0,-.2,0)),delta=target.sub(origin),flight=Math.max(.7,Math.min(1.8,delta.length()/19));
  const velocity=delta.add(new THREE.Vector3(0,7.5*flight*flight,0)).divideScalar(flight);
  const axe=createTitanAxe();axe.position.copy(origin);axe.scale.setScalar(1.55);scene.add(axe);
- titanAxes.push({m:axe,v:velocity,life:3.3,hit:false});tone(180,.26,'sawtooth',.06,260);tone(340,.3,'triangle',.04,-260);
+ titanAxes.push({m:axe,v:velocity,life:3.3,hit:false,trail:0});tone(180,.26,'sawtooth',.06,260);tone(340,.3,'triangle',.04,-260);
 }
 function updateTitanAxes(dt){
- for(let i=titanAxes.length-1;i>=0;i--){const a=titanAxes[i];a.life-=dt;a.v.y-=15*dt;a.m.position.addScaledVector(a.v,dt);a.m.rotation.z+=dt*11;a.m.rotation.x+=dt*2;
+ for(let i=titanAxes.length-1;i>=0;i--){const a=titanAxes[i];a.life-=dt;a.v.y-=15*dt;a.m.position.addScaledVector(a.v,dt);a.m.rotation.z+=dt*16;a.m.rotation.x+=dt*1.1;a.trail+=dt;if(a.trail>.055){a.trail=0;burst(a.m.position.clone(),3,0xaddbfa,1.4)}
  const dist=Math.hypot(a.m.position.x-player.x,a.m.position.z-player.z);
  if(!a.hit&&dist<1.8&&Math.abs(a.m.position.y-(player.y-.5))<2.1){a.hit=true;hurt(24);burst(a.m.position.clone(),20,0xd8edff,6);tone(105,.22,'sawtooth',.07,-65)}
  if(a.m.position.y<.35||a.life<=0||a.hit){if(!a.hit&&a.m.position.y<.35){burst(a.m.position.clone(),18,0xa1b7c4,5);tone(95,.23,'triangle',.045,-55)}scene.remove(a.m);titanAxes.splice(i,1)}
  }
 }
 function spawnBoss(){let g=enemyModel();g.position.set(0,0,-33);g.scale.setScalar(4.1);scene.add(g);boss={g,hp:100+wave*22,max:100+wave*22,attack:0,stomp:elapsed+3,stompCharge:0,shockwaves:[],impactShake:0,axeAt:elapsed+3.5,axeWindup:0,axeHand:null};$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';notice('⚠ BOSS INBOUND — THE ANDREW TITAN',3.8);tone(95,.7,'sawtooth',.08,-50)}
-function updateBoss(dt){if(!boss)return;const b=boss,g=b.g,dx=player.x-g.position.x,dz=player.z-g.position.z,d=Math.max(.01,Math.hypot(dx,dz));g.rotation.y=Math.atan2(dx,dz);g.position.y=Math.sin(elapsed*4)*.1;for(const side of [-1,1]){g.userData['arm'+side].rotation.x=Math.sin(elapsed*4)*side*.4;g.userData['leg'+side].rotation.x=-Math.sin(elapsed*4)*side*.4}if(elapsed>b.axeAt-.85&&elapsed<b.axeAt){b.axeWindup=THREE.MathUtils.clamp((elapsed-(b.axeAt-.85))/.85,0,1);g.userData['arm1'].rotation.x=-2.7*b.axeWindup;g.rotation.z=Math.sin(b.axeWindup*Math.PI)*-.12;if(!b.axeHand){b.axeHand=createTitanAxe();b.axeHand.scale.setScalar(.43);g.userData['arm1'].add(b.axeHand);b.axeHand.position.set(0,-.6,.3)}}if(elapsed>=b.axeAt){launchTitanAxe(b);b.axeAt=elapsed+5.8+Math.random()*1.8;b.axeWindup=0;if(b.axeHand){g.userData['arm1'].remove(b.axeHand);b.axeHand=null}}
+function updateBoss(dt){if(!boss)return;const b=boss,g=b.g,dx=player.x-g.position.x,dz=player.z-g.position.z,d=Math.max(.01,Math.hypot(dx,dz));g.rotation.y=Math.atan2(dx,dz);g.position.y=Math.sin(elapsed*4)*.1;for(const side of [-1,1]){g.userData['arm'+side].rotation.x=Math.sin(elapsed*4)*side*.4;g.userData['leg'+side].rotation.x=-Math.sin(elapsed*4)*side*.4}// Anticipation, crouch, torso twist, overhead draw, then an explosive follow-through.
+ const chargeStart=b.axeAt-1.55,throwing=elapsed>=chargeStart&&elapsed<b.axeAt;
+ if(throwing){
+  const t=THREE.MathUtils.clamp((elapsed-chargeStart)/1.55,0,1),wind=t*t*(3-2*t);
+  b.axeWindup=wind;
+  if(!b.axeHand){b.axeHand=createTitanAxe();b.axeHand.scale.setScalar(.48);g.userData['arm1'].add(b.axeHand);b.axeHand.position.set(0,-.78,.2);tone(105,.4,'sawtooth',.045,70)}
+  g.userData['arm1'].rotation.x=THREE.MathUtils.lerp(.45,-2.85,wind);
+  g.userData['arm1'].rotation.z=THREE.MathUtils.lerp(.2,-.65,wind);
+  g.userData['arm-1'].rotation.x=-.7*wind;
+  g.userData['head'].rotation.x=-.2*wind;
+  g.rotation.z=-Math.sin(wind*Math.PI)*.2;
+  g.rotation.x=-.15*wind;
+  g.position.y-=Math.sin(wind*Math.PI)*.35;
+  b.axeHand.rotation.z=.3+wind*.65;
+  if(t>.78&&Math.random()<dt*18)burst(g.position.clone().add(new THREE.Vector3(0,6.5,0)),2,0xd6edff,2);
+ }else{g.rotation.z=THREE.MathUtils.damp(g.rotation.z,0,9,dt);g.rotation.x=THREE.MathUtils.damp(g.rotation.x,0,9,dt)}
+ if(elapsed>=b.axeAt){
+  g.userData['arm1'].rotation.x=1.25;g.userData['arm1'].rotation.z=.3;g.rotation.z=.18;
+  launchTitanAxe(b);burst(g.position.clone().add(new THREE.Vector3(0,5.6,0)),18,0xcce9ff,6);
+  b.axeAt=elapsed+6+Math.random()*1.5;b.axeWindup=0;
+  if(b.axeHand){g.userData['arm1'].remove(b.axeHand);b.axeHand=null}
+ }
  if(elapsed>b.stomp-1.1&&elapsed<b.stomp){b.stompCharge=Math.min(1,b.stompCharge+dt*1.5);g.scale.setScalar(4.1*(1+b.stompCharge*.055));g.position.y+=b.stompCharge*.9;for(const side of [-1,1]){g.userData['arm'+side].rotation.x=-1.3*b.stompCharge;g.userData['leg'+side].rotation.x=side*.45*b.stompCharge}}
  if(elapsed>=b.stomp){const origin=g.position.clone();origin.y=.22;const ring=mesh(new THREE.TorusGeometry(1,.19,8,48),new THREE.MeshBasicMaterial({color:0xf1a64b,transparent:true,opacity:.85}),origin.x,origin.y,origin.z);ring.rotation.x=Math.PI/2;b.shockwaves.push({m:ring,age:0,hit:false});burst(origin.clone().add(new THREE.Vector3(0,.3,0)),44,0xffba60,11);b.impactShake=1;for(let n=0;n<10;n++){const a=n*Math.PI/5,r=1.8+Math.random()*1.8;const rock=mesh(new THREE.DodecahedronGeometry(.22+Math.random()*.24,0),castleStone,origin.x+Math.cos(a)*r,.2,origin.z+Math.sin(a)*r);particles.push({m:rock,v:new THREE.Vector3(Math.cos(a)*3,4+Math.random()*3,Math.sin(a)*3),life:.65,max:.65})}const ring2=mesh(new THREE.TorusGeometry(1,.08,5,40),new THREE.MeshBasicMaterial({color:0xffe9a0,transparent:true,opacity:.8}),origin.x,.28,origin.z);ring2.rotation.x=Math.PI/2;b.shockwaves.push({m:ring2,age:-.12,hit:true});b.stomp=elapsed+5.2;b.stompCharge=0;g.scale.setScalar(4.1);tone(75,.35,'sawtooth',.06,-40)}
  for(let i=b.shockwaves.length-1;i>=0;i--){const w=b.shockwaves[i];w.age+=dt;const radius=Math.max(.01,1+Math.max(0,w.age)*13);w.m.scale.setScalar(radius);w.m.material.opacity=Math.max(0,.85-Math.max(0,w.age)*.8);if(!w.hit&&Math.abs(Math.hypot(player.x-w.m.position.x,player.z-w.m.position.z)-radius)<1.25&&Math.abs(player.y-1.7)<2.2){w.hit=true;hurt(20)}if(w.age>1.05){scene.remove(w.m);b.shockwaves.splice(i,1)}}

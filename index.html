@@ -791,7 +791,7 @@ function buildCampaignMap(stage){
   if(stage===2){add(new THREE.BoxGeometry(3.5,1,3.5),trimMat,x,h+.6,z)}
   if(stage===3){add(new THREE.ConeGeometry(1.8,4+rng()*3,5),rockMat,x,h+1,z);add(new THREE.BoxGeometry(1.6,.15,3),trimMat,x,.05,z)}
  }
- for(let i=0;i<18;i++){const x=(rng()-.5)*93,z=(rng()-.5)*93;if(Math.hypot(x,z)<18)continue;
+ for(let i=0;i<18;i++){const angle=rng()*Math.PI*2,dist=48+rng()*7,x=Math.cos(angle)*dist,z=Math.sin(angle)*dist;
   if(stage===1){add(new THREE.DodecahedronGeometry(.6+rng()*.6,0),accentMat,x,.45,z)}
   if(stage===2){const h=2+rng()*2;add(new THREE.CylinderGeometry(.55,.7,h,8),rockMat,x,h/2,z);add(new THREE.BoxGeometry(1.7,.35,1.7),trimMat,x,h+.12,z)}
   if(stage===3){const o=add(new THREE.ConeGeometry(.8+rng()*.6,2+rng()*2,5),rockMat,x,1.3,z);o.rotation.z=.15}

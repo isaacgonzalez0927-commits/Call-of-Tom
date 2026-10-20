@@ -671,10 +671,41 @@ function drawSpeedLines(dt){const running=active&&!paused&&!dead&&!thirdPerson&&
  for(let i=0;i<15;i++){const side=i%2?-1:1,seed=(i*0.61803398875+elapsed*.6)%1,y=h*(.15+((i*.237+elapsed*.4)%1)*.7),x=w*.5+side*w*(.34+seed*.13);speedCtx.beginPath();speedCtx.moveTo(x,y);speedCtx.lineTo(x+side*(10+seed*26),y-3-seed*8);speedCtx.stroke()}
 }
 
+// Set window.CALL_OF_TOM_SERVER_URL to the deployed wss:// server URL to use realtime squads.
+const realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'';
+let realtimeSocket=null,realtimeId=null,realtimePending=null;
+function realtimeConnect(action,code){
+ return new Promise((resolve,reject)=>{
+  if(!realtimeServerUrl)return reject(Error('Real-time server URL is not configured yet'));
+  const ws=new WebSocket(realtimeServerUrl);realtimeSocket=ws;
+  const timeout=setTimeout(()=>{reject(Error('Server connection timed out'));ws.close()},12000);
+  ws.onopen=()=>ws.send(JSON.stringify({type:action,code}));
+  ws.onmessage=event=>{
+   let msg;try{msg=JSON.parse(event.data)}catch{return}
+   if(msg.type==='error'){clearTimeout(timeout);$('campaignMessage').textContent=msg.message;reject(Error(msg.message));return}
+   if(msg.type==='joined'){clearTimeout(timeout);realtimeId=msg.id;resolve(msg);return}
+   if(msg.type==='state'){squad=msg.squad;renderSquad();syncRemoteSquad()}
+   if(msg.type==='level'){if(!campaignMode||campaignStage!==msg.level)beginCampaignStage(msg.level)}
+   if(msg.type==='snapshot'&&campaignMode){for(const p of msg.players){if(p.id===realtimeId)continue;const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z}}}
+   if(msg.type==='victory'){$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
+  };
+  ws.onerror=()=>{clearTimeout(timeout);reject(Error('Cannot reach multiplayer server'))};
+  ws.onclose=()=>{if(realtimeSocket===ws)realtimeSocket=null}
+ })
+}
+function realtimeSend(type,extra={}){if(realtimeSocket?.readyState===1)realtimeSocket.send(JSON.stringify({type,...extra}))}
 let squad=null,campaignMode=false,campaignStage=0,campaignReported=false,campaignBusy=false,campaignTimer=0;const remoteSquadAvatars=new Map();
 const squadPlayerId=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random();
 const campaignNames=['','BEACHHEAD ASSAULT','CASTLE SIEGE','TITAN SHOWDOWN'];
 async function squadRequest(action,extra={}){
+ if(realtimeServerUrl){
+  if(action==='create'||action==='join'){await realtimeConnect(action,extra.code);return squad}
+  if(action==='select'){realtimeSend('select',{suit:extra.suit});return squad}
+  if(action==='start'){realtimeSend('start');return squad}
+  if(action==='leave'){realtimeSocket?.close();realtimeSocket=null;return null}
+  if(action==='position'){realtimeSend('move',{x:extra.x,z:extra.z});return squad}
+  if(action==='state'||action==='complete')return squad;
+ }
  const response=await fetch('/api/squad',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id:squadPlayerId,code:squad?.code,...extra})});
  const data=await response.json();if(!response.ok)throw Error(data.error||'Squad request failed');return data.squad||null;
 }
@@ -705,7 +736,7 @@ function renderSquad(){
 }
 function syncRemoteSquad(){const live=new Set();if(!squad||!campaignMode)return;for(const p of squad.players){if(p.id===squadPlayerId)continue;live.add(p.id);let av=remoteSquadAvatars.get(p.id);if(!av){av=makeTom();scene.add(av);remoteSquadAvatars.set(p.id,av)}av.visible=true;av.userData.suitMaterials?.forEach(m=>m.color.setHex(suitVariants[p.suit]));av.userData.targetX=p.x||0;av.userData.targetZ=p.z||0}for(const [id,av] of remoteSquadAvatars){if(!live.has(id)){scene.remove(av);remoteSquadAvatars.delete(id)}}}
 async function pollSquad(){
- if(!squad||campaignBusy)return;campaignBusy=true;
+ if(!squad||campaignBusy)return;if(realtimeServerUrl){if(campaignMode&&active)realtimeSend('move',{x:player.x,z:player.z});return}campaignBusy=true;
  try{squad=await squadRequest(campaignMode&&active?'position':'state',campaignMode&&active?{x:player.x,z:player.z}:{});renderSquad();syncRemoteSquad()}catch(e){squadError(e)}finally{campaignBusy=false}
 }
 setInterval(pollSquad,1700);

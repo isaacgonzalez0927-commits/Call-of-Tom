@@ -1,0 +1,21 @@
+{
+  "name": "call-of-tom",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SQUADS",
+        "class_name": "Squad"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "Squad"
+      ]
+    }
+  ]
+}

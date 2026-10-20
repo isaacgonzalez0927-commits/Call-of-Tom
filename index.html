@@ -292,7 +292,7 @@ function fire(){
  if(ammo<=0){reload();return}
  fireAt=elapsed;ammo--;shake=.13;gunRecoil=Math.min(.075,gunRecoil+.034);if(muzzleLight)muzzleLight.intensity=12;tone(310,.12,'sawtooth',.027,-230);
  // The center-screen camera ray is the authoritative aim, including in third person.
- const viewDirection=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
+ const viewDirection=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();if(campaignMode&&realtimeServerUrl)realtimeSend('shoot',{dx:viewDirection.x,dz:viewDirection.z});
  const viewOrigin=camera.position.clone(),target=viewOrigin.clone().addScaledVector(viewDirection,110);
  let best=110;
  // Find nearest visible Andrew or boss along the crosshair.
@@ -388,7 +388,7 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if
  if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y>=1.7+stairRise-1.05&&player.y<floor+.5&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
 updatePickups(dt);walk+=moving&&grounded?dt*(actualSpeed*.92+3):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*THREE.MathUtils.clamp(actualSpeed/13,0,1)*.105:0;slideCameraDrop=THREE.MathUtils.damp(slideCameraDrop,slideTime>0?.65:0,slideTime>0?9:5,dt);camera.position.y-=slideCameraDrop;}camera.rotation.order='YXZ';slideCameraRoll=THREE.MathUtils.damp(slideCameraRoll,slideTime>0?Math.sin(elapsed*6)*.025:0,7,dt);camera.rotation.set(pitch,yaw,slideCameraRoll);shake=Math.max(0,shake-dt*.7);const bobStrength=grounded?THREE.MathUtils.clamp(actualSpeed/13,0,1):0;gunBobX=THREE.MathUtils.damp(gunBobX,Math.cos(walk*.5)*.033*bobStrength,10,dt);gunBobY=THREE.MathUtils.damp(gunBobY,Math.sin(walk)*.075*bobStrength,10,dt);gunBobRoll=THREE.MathUtils.damp(gunBobRoll,Math.cos(walk*.5)*.018*bobStrength,9,dt);gunBaseX=THREE.MathUtils.lerp(.53,0,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.51,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.79,aimBlend);gun.position.set(gunBaseX+gunBobX,gunBaseY+gunBobY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
-if(boss)updateBoss(dt);updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(campaignMode)finishCampaignStage();else offerUpgrades()}}
+if(boss&&!(campaignMode&&realtimeServerUrl))updateBoss(dt);if(!(campaignMode&&realtimeServerUrl))updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(!(campaignMode&&realtimeServerUrl)&&spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!(campaignMode&&realtimeServerUrl)&&!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(campaignMode)finishCampaignStage();else offerUpgrades()}}
 for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],g=e.g;
  if(e.emerge<1){
  const old=e.emerge;e.emerge=Math.min(1,old+dt*.58);const t=e.emerge;
@@ -673,7 +673,7 @@ function drawSpeedLines(dt){const running=active&&!paused&&!dead&&!thirdPerson&&
 
 // Set window.CALL_OF_TOM_SERVER_URL to the deployed wss:// server URL to use realtime squads.
 let realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'';fetch('/api/multiplayer-config').then(r=>r.json()).then(d=>{if(d.url)realtimeServerUrl=d.url}).catch(()=>{});
-let realtimeSocket=null,realtimeId=null,realtimePending=null;
+let realtimeSocket=null,realtimeId=null,realtimePending=null;const networkEnemies=new Map();let networkBoss=null,networkSendAt=0;
 function realtimeConnect(action,code){
  return new Promise((resolve,reject)=>{
   if(!realtimeServerUrl)return reject(Error('Real-time server URL is not configured yet'));
@@ -686,7 +686,8 @@ function realtimeConnect(action,code){
    if(msg.type==='joined'){clearTimeout(timeout);realtimeId=msg.id;resolve(msg);return}
    if(msg.type==='state'){squad=msg.squad;renderSquad();syncRemoteSquad()}
    if(msg.type==='level'){if(!campaignMode||campaignStage!==msg.level)beginCampaignStage(msg.level)}
-   if(msg.type==='snapshot'&&campaignMode){for(const p of msg.players){if(p.id===realtimeId)continue;const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z}}}
+   if(msg.type==='snapshot'&&campaignMode){syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z}}}
+   if(msg.type==='damage'&&msg.player===realtimeId){hp=msg.hp;updateHud()}
    if(msg.type==='victory'){$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
   };
   ws.onerror=()=>{clearTimeout(timeout);reject(Error('Cannot reach multiplayer server'))};
@@ -726,7 +727,7 @@ function renderSquad(){
  for(const p of squad.players){
   const item=document.createElement('div');item.className='campaignMember';
   const name=document.createElement('strong');name.textContent=p.name+(p.id===squad.host?' ★ HOST':'')+(p.id===(realtimeId||squadPlayerId)?' (YOU)':'');item.append(name);
-  const sel=document.createElement('select');sel.disabled=p.id!==squadPlayerId||squad.status!=='lobby';
+  const sel=document.createElement('select');sel.disabled=p.id!==(realtimeId||squadPlayerId)||squad.status!=='lobby';
   for(const color of Object.keys(suitVariants)){const o=document.createElement('option');o.value=color;o.textContent=color+' Tom';o.selected=color===p.suit;o.disabled=squad.players.some(q=>q.id!==p.id&&q.suit===color);sel.append(o)}
   sel.onchange=async()=>{try{squad=await squadRequest('select',{suit:sel.value});chooseSuit(sel.value);renderSquad()}catch(e){squadError(e);renderSquad()}};item.append(sel);$('campaignMembers').append(item)
  }
@@ -734,9 +735,9 @@ function renderSquad(){
  if(squad.status==='playing'&&(!campaignMode||campaignStage!==squad.stage))beginCampaignStage(squad.stage);
  if(squad.status==='won'&&campaignMode){campaignMode=false;active=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();document.exitPointerLock?.();$('menu').style.display='flex';$('hud').style.display='none';$('campaignPanel').classList.add('open');$('campaignMessage').textContent='VICTORY! All squad members completed all three missions.'}
 }
-function syncRemoteSquad(){const live=new Set();if(!squad||!campaignMode)return;for(const p of squad.players){if(p.id===squadPlayerId)continue;live.add(p.id);let av=remoteSquadAvatars.get(p.id);if(!av){av=makeTom();scene.add(av);remoteSquadAvatars.set(p.id,av)}av.visible=true;av.userData.suitMaterials?.forEach(m=>m.color.setHex(suitVariants[p.suit]));av.userData.targetX=p.x||0;av.userData.targetZ=p.z||0}for(const [id,av] of remoteSquadAvatars){if(!live.has(id)){scene.remove(av);remoteSquadAvatars.delete(id)}}}
+function syncRemoteSquad(){const live=new Set();if(!squad||!campaignMode)return;for(const p of squad.players){if(p.id===(realtimeId||squadPlayerId))continue;live.add(p.id);let av=remoteSquadAvatars.get(p.id);if(!av){av=makeTom();scene.add(av);remoteSquadAvatars.set(p.id,av)}av.visible=true;av.userData.suitMaterials?.forEach(m=>m.color.setHex(suitVariants[p.suit]));av.userData.targetX=p.x||0;av.userData.targetZ=p.z||0}for(const [id,av] of remoteSquadAvatars){if(!live.has(id)){scene.remove(av);remoteSquadAvatars.delete(id)}}}
 async function pollSquad(){
- if(!squad||campaignBusy)return;if(realtimeServerUrl){if(campaignMode&&active)realtimeSend('move',{x:player.x,z:player.z});return}campaignBusy=true;
+ if(!squad||campaignBusy)return;if(realtimeServerUrl){return}campaignBusy=true;
  try{squad=await squadRequest(campaignMode&&active?'position':'state',campaignMode&&active?{x:player.x,z:player.z}:{});renderSquad();syncRemoteSquad()}catch(e){squadError(e)}finally{campaignBusy=false}
 }
 setInterval(pollSquad,1700);
@@ -744,7 +745,7 @@ function beginCampaignStage(stage){
  campaignMode=true;campaignStage=stage;campaignReported=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();
  reset();campaignMode=true;campaignStage=stage;
  wave=stage*2-1;spawnLeft=stage===1?9:stage===2?15:21;spawnTimer=.4;bossWave=stage===3;
- if(stage===3)spawnBoss();
+ if(stage===3&&!realtimeServerUrl)spawnBoss();if(realtimeServerUrl){spawnLeft=0;bossWave=false;clearNetworkCombat()}
  $('campaignPanel').classList.remove('open');$('menu').style.display='none';
  notice('CAMPAIGN '+stage+'/3 — '+campaignNames[stage],4);
  lock();updateHud();
@@ -757,7 +758,15 @@ async function finishCampaignStage(){
  try{squad=await squadRequest('complete',{stage:campaignStage});renderSquad()}catch(e){squadError(e)}
 }
 
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);for(const av of remoteSquadAvatars.values()){av.position.x=THREE.MathUtils.damp(av.position.x,av.userData.targetX||0,5,dt);av.position.z=THREE.MathUtils.damp(av.position.z,av.userData.targetZ||0,5,dt);av.position.y=0;av.scale.y=1.12}if(active&&!paused&&!dead&&!choosingUpgrade)tick(dt);else if(!active){camera.position.set(Math.sin(performance.now()*.00016)*7,5,14);camera.lookAt(0,2,0)}for(let i=0;i<clouds.length;i++){clouds[i].position.x+=dt*(.5+i*.015);if(clouds[i].position.x>115)clouds[i].position.x=-115}sea.material.opacity=.83+Math.sin(performance.now()*.001)*.04;animateGunReload(dt);drawSpeedLines(dt);renderer.render(scene,camera)}animate();$('loading').textContent='SYSTEMS READY · DESKTOP / MOUSE + KEYBOARD';window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function clearNetworkCombat(){for(const e of networkEnemies.values())scene.remove(e.g);networkEnemies.clear();if(networkBoss){scene.remove(networkBoss);networkBoss=null}$('bossHud').style.display='none'}
+function syncCombatSnapshot(s){
+ const live=new Set();
+ for(const data of s.enemies||[]){live.add(data.id);let e=networkEnemies.get(data.id);if(!e){const g=enemyModel();g.position.set(data.x,0,data.z);const scale=data.type==='brute'?1.35:data.type==='scout'?.78:1;g.scale.setScalar(scale);scene.add(g);e={g};networkEnemies.set(data.id,e)}e.x=data.x;e.z=data.z;e.g.userData.head?.rotation.set(0,Math.sin(performance.now()*.004+data.id)*.1,0)}
+ for(const [id,e] of networkEnemies){if(!live.has(id)){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),9,0x8af6fa,4);scene.remove(e.g);networkEnemies.delete(id)}}
+ if(s.boss){if(!networkBoss){networkBoss=enemyModel();networkBoss.scale.setScalar(4.1);scene.add(networkBoss)}networkBoss.position.set(s.boss.x,0,s.boss.z);$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';$('bossBar').style.width=(s.boss.hp/s.boss.max*100)+'%'}else if(networkBoss){scene.remove(networkBoss);networkBoss=null;$('bossHud').style.display='none'}
+ $('remaining').textContent=(networkEnemies.size+(s.spawnLeft||0)+(s.boss?1:0))+' ANDREWS REMAINING';
+}
+function animate(){requestAnimationFrame(animate);if(campaignMode&&realtimeServerUrl&&active&&performance.now()-networkSendAt>90){networkSendAt=performance.now();realtimeSend('move',{x:player.x,z:player.z})}let dt=Math.min(clock.getDelta(),.05);for(const e of networkEnemies.values()){e.g.position.x=THREE.MathUtils.damp(e.g.position.x,e.x,12,dt);e.g.position.z=THREE.MathUtils.damp(e.g.position.z,e.z,12,dt)}for(const av of remoteSquadAvatars.values()){av.position.x=THREE.MathUtils.damp(av.position.x,av.userData.targetX||0,5,dt);av.position.z=THREE.MathUtils.damp(av.position.z,av.userData.targetZ||0,5,dt);av.position.y=0;av.scale.y=1.12}if(active&&!paused&&!dead&&!choosingUpgrade)tick(dt);else if(!active){camera.position.set(Math.sin(performance.now()*.00016)*7,5,14);camera.lookAt(0,2,0)}for(let i=0;i<clouds.length;i++){clouds[i].position.x+=dt*(.5+i*.015);if(clouds[i].position.x>115)clouds[i].position.x=-115}sea.material.opacity=.83+Math.sin(performance.now()*.001)*.04;animateGunReload(dt);drawSpeedLines(dt);renderer.render(scene,camera)}animate();$('loading').textContent='SYSTEMS READY · DESKTOP / MOUSE + KEYBOARD';window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script></body></html// Clean coastal contours: a few rounded polygonal slopes, smooth grass caps and subtle stone bases.
 for(let i=0;i<12;i++){
  const a=(i+.35)*Math.PI*2/12,r=58+rand()*8,x=Math.cos(a)*r,z=Math.sin(a)*r;

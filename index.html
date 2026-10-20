@@ -212,11 +212,7 @@ function enemyModel(){
  const hair=mesh(new THREE.DodecahedronGeometry(.53,0),metal,0,.5,-.08,head);hair.scale.set(1.1,.36,.88);const forehead=box(.85,.13,.28,metal,0,.38,.3,head);forehead.rotation.x=-.16;for(const side of [-1,1]){const sideburn=box(.18,.32,.23,metal,side*.49,.31,.06,head);sideburn.rotation.z=side*.17}
  for(let i=0;i<4;i++){const tuft=mesh(new THREE.ConeGeometry(.18,.4,4),metal,(i-1.5)*.22,.68,-.13,head);tuft.rotation.z=(i-1.5)*.25}
  box(.8,.22,.5,leather,0,.52,0,g);box(.3,.23,.13,metal,0,.52,.32,g);for(const side of [-1,1]){const skirt=box(.38,.33,.15,bronze,side*.32,.43,.32,g);skirt.rotation.z=-side*.12;for(let k=0;k<2;k++)ball(.036,metal,side*.28,.56-k*.13,.42,g)}
- const club=new THREE.Group();club.position.set(-.02,-.68,.25);g.userData['arm-1'].add(club);club.rotation.z=-.45;
- mesh(new THREE.CylinderGeometry(.075,.08,.83,6),brown,0,-.37,0,club);
- mesh(new THREE.CylinderGeometry(.26,.19,.44,8),leather,0,-.83,0,club);mesh(new THREE.CylinderGeometry(.285,.285,.075,8),metal,0,-.64,0,club);mesh(new THREE.CylinderGeometry(.285,.285,.075,8),metal,0,-1.04,0,club);for(let k=0;k<3;k++)mesh(new THREE.TorusGeometry(.085,.019,4,8),bronze,0,-.17-k*.11,0,club).rotation.x=Math.PI/2;
- for(let j=0;j<7;j++){const a=j*Math.PI*2/7;const spike=mesh(new THREE.ConeGeometry(.095,.2,4),metal,Math.cos(a)*.24,-.84,Math.sin(a)*.24,club);spike.rotation.z=-Math.cos(a)*Math.PI*.5;spike.rotation.x=Math.sin(a)*Math.PI*.5}
- g.userData.club=club;return g
+ g.userData.club=new THREE.Group(); return g
 }
 function spawnEnemy(){let a=Math.random()*Math.PI*2,d=20+Math.random()*24,x=player.x+Math.sin(a)*d,z=player.z+Math.cos(a)*d;x=THREE.MathUtils.clamp(x,-68,68);z=THREE.MathUtils.clamp(z,-68,68);if(collide(x,z,.85)){for(let tries=0;tries<14;tries++){let a=Math.random()*Math.PI*2;x=THREE.MathUtils.clamp(player.x+Math.sin(a)*(18+Math.random()*26),-68,68);z=THREE.MathUtils.clamp(player.z+Math.cos(a)*(18+Math.random()*26),-68,68);if(!collide(x,z,.85)&&!clearCastleGround(x,z))break}if(collide(x,z,.85)||clearCastleGround(x,z))return}if(collide(x,z,.85)||clearCastleGround(x,z))return;let g=enemyModel();g.position.set(x,0,z);let scale=.78+Math.random()*.35;g.scale.setScalar(scale);scene.add(g);const archer=wave>=2&&Math.random()<Math.min(.45,.14+wave*.018);if(archer){const rig=new THREE.Group();rig.position.set(.69,1.16,.37);rig.rotation.y=0;g.add(rig);const bowWood=mat(0x724022),bowTrim=mat(0xe5b66c),stringMat=new THREE.LineBasicMaterial({color:0xffe9c0}),fletch=mat(0xc84a2e);
  // Recurve bow with a shaped wooden riser, curved limbs, and a real V-shaped drawn string.
@@ -284,21 +280,21 @@ function fire(){
 }
 function updateHud(){$('wave').textContent=String(wave).padStart(2,'0');$('remaining').textContent=(enemies.length+spawnLeft+(boss?1:0))+' ANDREWS REMAINING';$('hp').textContent=Math.max(0,Math.ceil(hp));$('hpbar').style.width=hp+'%';$('ammo').textContent=ammo+' / '+maxAmmo();$('score').textContent='SCORE '+String(score).padStart(6,'0')}
 function hurt(amount){hp=Math.max(0,hp-amount);$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170);tone(100,.25,'sawtooth',.05,-60);if(hp<=0){dead=true;active=false;$('bossHud').style.display='none';document.exitPointerLock?.();$('over').style.display='flex';$('finalstats').textContent='WAVE '+wave+'  ·  '+kills+' ANDREWS SOAKED  ·  '+score+' POINTS';$('hud').style.display='none'}updateHud()}
-function collide(x,z,radius=.48,feet=0){if(Math.hypot(x,z)>islandRadius-1)return true;return obstacles.some(o=>{if(feet>0&&mantleSurfaces.some(s=>s.x===o.x&&s.z===o.z&&feet>=s.top-.08))return false;const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48,feet=0){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius,feet))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius,feet))pos.z+=sz}}
+function collide(x,z,radius=.48,feet=0){if(Math.hypot(x,z)>islandRadius-1)return true;return obstacles.some(o=>{if(feet>=0&&mantleSurfaces.some(s=>s.x===o.x&&s.z===o.z&&feet>=s.top-.22))return false;const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48,feet=0){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius,feet))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius,feet))pos.z+=sz}}
 function startMantle(){
  if(mantle||mantleCooldown>0||slideTime>0)return false;
  const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
  let best=null,bestScore=Infinity;
  for(const s of mantleSurfaces){
   const feet=player.y-1.7,height=s.top-feet;
-  if(height<.38||height>2.8||s.w<1||s.d<1)continue;
+  if(height<-.1||height>3.25||s.w<1||s.d<1)continue;
   const halfW=s.w/2,halfD=s.d/2;
   const nx=THREE.MathUtils.clamp(player.x,s.x-halfW,s.x+halfW);
   const nz=THREE.MathUtils.clamp(player.z,s.z-halfD,s.z+halfD);
   const distance=Math.hypot(nx-player.x,nz-player.z);
-  if(distance>.95)continue;
+  if(distance>1.45)continue;
   const approach=(nx-player.x)*forward.x+(nz-player.z)*forward.z;
-  if(approach<-.05)continue;
+  if(approach<-.18)continue;
   // Landing must be well inside the upper surface, not inside the wall.
   const landX=THREE.MathUtils.clamp(nx+forward.x*.95,s.x-halfW+.48,s.x+halfW-.48);
   const landZ=THREE.MathUtils.clamp(nz+forward.z*.95,s.z-halfD+.48,s.z+halfD-.48);
@@ -311,7 +307,7 @@ function startMantle(){
 }
 function damageNumber(amount,position,finish=false){const p=position.clone();p.y+=1.85;p.project(camera);if(p.z>1||p.z< -1)return;const el=document.createElement('div');el.className='damageNumber'+(finish?' finish':'');el.textContent=String(amount);el.style.left=((p.x*.5+.5)*innerWidth)+'px';el.style.top=((-p.y*.5+.5)*innerHeight)+'px';$('damageNumbers').appendChild(el);setTimeout(()=>el.remove(),800)}
 function tick(dt){if(choosingUpgrade)return;elapsed+=dt;castleUseCooldown=Math.max(0,castleUseCooldown-dt);if(keys.KeyE&&!keys._castleE&&castleUseCooldown<=0){for(const p of castleInteractables){if(Math.hypot(player.x-p.x,player.z-p.z)<3.1){if(p.type==='heal'){hp=Math.min(upgradeMaxHealth,hp+40);notice('CASTLE FOUNTAIN +40 HP',1.7)}else if(p.type==='ammo'){ammo=maxAmmo();reloading=false;notice('CASTLE ARMORY: AMMO REFILLED',1.7)}else if(p.type==='training'){score+=150;notice('TARGET PRACTICE +150 POINTS',1.7)}else if(p.type==='bell'){burst(new THREE.Vector3(p.x,4,p.z),35,0xffda62,7);notice('CASTLE BELL RUNG!',2);tone(700,.6,'sine',.06,-250)}else if(p.type==='treasure'){score+=300;notice('TREASURE VAULT +300 POINTS',2);burst(new THREE.Vector3(p.x,1,p.z),20,0xffd15e,5)}else if(p.type==='campfire'){hp=Math.min(upgradeMaxHealth,hp+15);speedBoostUntil=Math.max(speedBoostUntil,elapsed+5);notice('CAMPFIRE: HEAL + SPEED BOOST',2)}castleUseCooldown=12;updateHud();break}}}keys._castleE=!!keys.KeyE;if(elapsed>noticeEnd)$('notice').style.opacity=0;if(reloading&&elapsed>=reloadEnd){reloading=false;ammo=maxAmmo();$('reloadText').textContent='R TO RELOAD';tone(650,.13,'sine',.04);updateHud()}aiming=!!keys.Aim;aimBlend=THREE.MathUtils.damp(aimBlend,aiming?1:0,13,dt);camera.fov=THREE.MathUtils.lerp(preferredFov,thirdPerson?57:48,aimBlend);camera.updateProjectionMatrix();$('cross').classList.toggle('ads',aiming);
-mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spaceHeld){if(!startMantle()){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}}keys._spaceHeld=!!keys.Space;if(keys.ControlLeft&&sprinting&&grounded&&slideTime<=0&&keys.KeyW){slideTime=1.05;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);if(moveVelocity.length()<11)moveVelocity.addScaledVector(slideDir,Math.max(0,11-moveVelocity.dot(slideDir)));tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
+mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if(grounded){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}else if(verticalVelocity<=5)startMantle()}keys._spaceHeld=!!keys.Space;if(keys.ControlLeft&&sprinting&&grounded&&slideTime<=0&&keys.KeyW){slideTime=1.05;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);if(moveVelocity.length()<11)moveVelocity.addScaledVector(slideDir,Math.max(0,11-moveVelocity.dot(slideDir)));tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
  const input=new THREE.Vector3(s,0,-f),hasInput=input.lengthSq()>0;
  if(hasInput)input.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
  const boost=(elapsed<speedBoostUntil?1.55:1)*(1+upgradeLevels.velocity*.12);
@@ -336,9 +332,9 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spa
  const v=moveVelocity.clone().multiplyScalar(dt);
  if(mantle){mantle.t=Math.min(1,mantle.t+dt/mantle.duration);const t=mantle.t,s=t*t*(3-2*t);player.lerpVectors(mantle.start,mantle.end,s);player.y+=Math.sin(Math.PI*t)*.32;if(t>=1){player.copy(mantle.end);mantle=null;grounded=true;verticalVelocity=0}}else{
  // Move horizontally first; stair and ramp heights are resolved at the destination.
- const beforeX=player.x,beforeZ=player.z;moveWithCollision(player,v.x,v.z,.52,Math.max(0,player.y-1.7));if(Math.abs(player.x-beforeX-v.x)>.035)moveVelocity.x=0;if(Math.abs(player.z-beforeZ-v.z)>.035)moveVelocity.z=0;
+ const beforeX=player.x,beforeZ=player.z;const feetBeforeMove=player.y-1.7;moveWithCollision(player,v.x,v.z,.52,Math.max(0,feetBeforeMove));if(Math.abs(player.x-beforeX-v.x)>.035)moveVelocity.x=0;if(Math.abs(player.z-beforeZ-v.z)>.035)moveVelocity.z=0;
  let floor=1.7;
- for(const o of mantleSurfaces){if(Math.abs(player.x-o.x)<o.w/2-.2&&Math.abs(player.z-o.z)<o.d/2-.2&&player.y>=1.7+o.top-.2)floor=Math.max(floor,1.7+o.top)}
+ for(const o of mantleSurfaces){if(Math.abs(player.x-o.x)<o.w/2-.2&&Math.abs(player.z-o.z)<o.d/2-.2&&(player.y>=1.7+o.top-.45||grounded&&feetBeforeMove>=o.top-.22))floor=Math.max(floor,1.7+o.top)}
  for(const p of castleFloors){if(Math.abs(player.x-p.x)<p.w/2-.08&&Math.abs(player.z-p.z)<p.d/2-.08&&player.y>=1.7+p.y-.38)floor=Math.max(floor,1.7+p.y)}
  // Second courtyard staircase has its own climb height and allows passage underneath.
  const secondaryRise=THREE.MathUtils.clamp((castleZ-.35-player.z)/7.8,0,1)*3.9;
@@ -396,15 +392,15 @@ for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],g=e.g,dx=player.x-g.posi
  e.moveSpeed=THREE.MathUtils.damp(e.moveSpeed,THREE.MathUtils.clamp(distanceMoved/Math.max(dt,.001)/e.speed,0,1),9,dt);
  e.step+=distanceMoved*(e.archer?6.2:8.2);
  const stride=Math.sin(e.step),stepLift=Math.max(0,Math.cos(e.step*2));
- g.position.y=e.moveSpeed*(.045+stepLift*.055);
+ g.position.y=e.moveSpeed*(.045+stepLift*.085);
  g.rotation.z=THREE.MathUtils.damp(g.rotation.z,stride*e.moveSpeed*(e.archer?.07:.09),8,dt);
- g.rotation.x=THREE.MathUtils.damp(g.rotation.x,e.moveSpeed*.065,8,dt);
+ g.rotation.x=THREE.MathUtils.damp(g.rotation.x,e.moveSpeed*.13-e.swing*.12,8,dt);
  for(const side of [-1,1]){
    g.userData['leg'+side].rotation.x=THREE.MathUtils.damp(g.userData['leg'+side].rotation.x,-stride*side*e.moveSpeed*(e.archer?.78:.9),12,dt);
-   g.userData['leg'+side].rotation.z=THREE.MathUtils.damp(g.userData['leg'+side].rotation.z,side*.07*e.moveSpeed,10,dt);
-   if(!e.archer)g.userData['arm'+side].rotation.x=THREE.MathUtils.damp(g.userData['arm'+side].rotation.x,stride*side*e.moveSpeed*.7+(side===-1?-1:1)*Math.sin((1-e.swing)*Math.PI)*1.65,12,dt);
+   g.userData['leg'+side].rotation.z=THREE.MathUtils.damp(g.userData['leg'+side].rotation.z,side*(.08+.08*Math.cos(e.step))*e.moveSpeed,10,dt);
+   if(!e.archer)g.userData['arm'+side].rotation.x=THREE.MathUtils.damp(g.userData['arm'+side].rotation.x,-stride*side*e.moveSpeed*.95+(side===-1?-1:1)*Math.sin((1-e.swing)*Math.PI)*1.65,12,dt);
  }
- if(!e.archer){e.swing=Math.max(0,e.swing-dt*2.5);g.userData.head.rotation.z=THREE.MathUtils.damp(g.userData.head.rotation.z,Math.sin(e.step*.5)*.08*e.moveSpeed,8,dt);g.userData.club.rotation.z=THREE.MathUtils.damp(g.userData.club.rotation.z,-.45-e.swing*.9,12,dt)}if(e.archer){g.userData['arm1'].rotation.z=THREE.MathUtils.damp(g.userData['arm1'].rotation.z,-.8-.14*e.moveSpeed*stride,10,dt);}
+ if(!e.archer){e.swing=Math.max(0,e.swing-dt*2.5);g.userData.head.rotation.z=THREE.MathUtils.damp(g.userData.head.rotation.z,Math.sin(e.step*.5)*.08*e.moveSpeed,8,dt);g.userData.head.rotation.x=THREE.MathUtils.damp(g.userData.head.rotation.x,-.09*Math.sin(e.step*2)*e.moveSpeed-.16*e.swing,10,dt)}if(e.archer){g.userData['arm1'].rotation.z=THREE.MathUtils.damp(g.userData['arm1'].rotation.z,-.8-.14*e.moveSpeed*stride,10,dt);}
 }
 for(let i=enemyArrows.length-1;i>=0;i--){const a=enemyArrows[i],old=a.m.position.clone();a.v.y-=(a.gravity||0)*dt;a.m.position.addScaledVector(a.v,dt);a.m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),a.v.clone().normalize());a.life-=dt;const near=player.clone().sub(old),step=a.m.position.clone().sub(old),t=THREE.MathUtils.clamp(near.dot(step)/Math.max(.001,step.lengthSq()),0,1),closest=old.addScaledVector(step,t);if(closest.distanceTo(player)<.8){hurt(9+Math.floor(wave/6)*2);a.life=0;burst(a.m.position,6,0xf9bd6e,2)}if(a.life<=0){scene.remove(a.m);enemyArrows.splice(i,1)}}
 for(let i=shots.length-1;i>=0;i--){const sh=shots[i];const previous=sh.m.position.clone();sh.m.position.addScaledVector(sh.v,dt);sh.life-=dt;const next=sh.m.position.clone(),segment=next.clone().sub(previous);let nearest=1.01,hitEnemy=-1,hitBoss=false,hitWall=false;const raySphere=(center,r)=>{const v=previous.clone().sub(center),A=segment.lengthSq(),B=2*v.dot(segment),C=v.lengthSq()-r*r,D=B*B-4*A*C;if(D<0||A<1e-9)return null;const t=(-B-Math.sqrt(D))/(2*A);return t>=0&&t<=1?t:null};for(let j=0;j<enemies.length;j++){const e=enemies[j],t=raySphere(e.g.position.clone().add(new THREE.Vector3(0,1.05*e.scale,0)),1.2*e.scale);if(t!==null&&t<nearest){nearest=t;hitEnemy=j;hitBoss=false;hitWall=false}}if(boss){const t=raySphere(boss.g.position.clone().add(new THREE.Vector3(0,3.1,0)),3.4);if(t!==null&&t<nearest){nearest=t;hitEnemy=-1;hitBoss=true;hitWall=false}}const steps=Math.max(1,Math.ceil(segment.length()/.24));for(let k=1;k<=steps;k++){const t=k/steps;if(t>=nearest)break;const p=previous.clone().addScaledVector(segment,t);if(p.y<3.3&&collide(p.x,p.z,.08)){nearest=t;hitEnemy=-1;hitBoss=false;hitWall=true;break}}if(nearest<=1){sh.m.position.copy(previous).addScaledVector(segment,nearest);sh.life=0;if(hitWall)burst(sh.m.position,7,0x73eaff,2.5)}if(hitBoss&&boss){boss.hp-=1+upgradeLevels.damage*.25;damageNumber(Math.round(10*(1+upgradeLevels.damage*.25)),boss.g.position.clone().add(new THREE.Vector3(0,2,0)),boss.hp<=0);burst(sh.m.position,12,0x77eaff,7);tone(130,.12,'triangle',.03,130);if(boss.hp<=0)killBoss()}if(hitEnemy>=0&&enemies[hitEnemy]){const e=enemies[hitEnemy];e.hp-=1+upgradeLevels.damage*.25;damageNumber(Math.round(25*(1+upgradeLevels.damage*.25)),e.g.position,e.hp<=0);burst(sh.m.position,12,0x6eefff,4);$('hit').style.opacity=1;hitTime=elapsed+.12;tone(700,.07,'sine',.025,-250);if(e.hp<=0){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),17,0x9cde59,6);scene.remove(e.g);enemies.splice(hitEnemy,1);kills++;score+=100;updateHud()}}if(sh.life<=0||Math.abs(sh.m.position.x)>108||Math.abs(sh.m.position.z)>108){scene.remove(sh.m);shots.splice(i,1)}}if(elapsed>hitTime)$('hit').style.opacity=0;

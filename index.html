@@ -282,7 +282,7 @@ const enemyArrows=[];
 function startWave(){wave++;bossWave=wave%5===0;spawnLeft=bossWave?6+wave:5+wave*3;spawnTimer=.2;if(bossWave)spawnBoss();notice('WAVE '+String(wave).padStart(2,'0')+' — ANDREWS INBOUND',2.6);tone(440,.3,'sawtooth',.03,400)}
 function reset(){thirdPerson=false;aiming=false;aimBlend=0;keys.Mouse=false;keys.Aim=false;fireAt=-1;camera.fov=preferredFov;camera.updateProjectionMatrix();if(boss){for(const w of boss.shockwaves||[])scene.remove(w.m);scene.remove(boss.g);$('bossHud').style.display='none'}for(const e of enemies){scene.remove(e.g);if(e.spawnRing)scene.remove(e.spawnRing)}enemies.length=0;for(const s of shots)scene.remove(s.m);shots.length=0;for(const a of enemyArrows)scene.remove(a.m);enemyArrows.length=0;for(const a of titanAxes)scene.remove(a.m);titanAxes.length=0;for(const p of particles)scene.remove(p.m);particles.length=0;$('damageNumbers').replaceChildren();keys._spaceHeld=false;reloadStart=0;moveVelocity.set(0,0,0);gunBobX=gunBobY=gunBobRoll=gunRecoil=0;slideCameraDrop=slideCameraRoll=0;sprinting=false;lastWPress=-10;keys._castleE=false;castleUseCooldown=0;wave=0;score=0;upgradeMaxHealth=100;for(const key in upgradeLevels)upgradeLevels[key]=0;choosingUpgrade=false;upgradeOverlay.style.display='none';hp=100;ammo=maxAmmo();verticalVelocity=0;grounded=true;slideTime=0;mantle=null;mantleCooldown=0;boss=null;bossWave=false;kills=0;elapsed=0;spawnLeft=0;between=0;reloading=false;dead=false;active=true;paused=false;yaw=0;pitch=0;player.set(0,1.7,0);speedBoostUntil=0;for(const p of pickups){p.available=true;p.g.visible=true;p.respawn=0}camera.rotation.set(0,0,0);$('menu').style.display='none';$('over').style.display='none';$('pause').style.display='none';$('hud').style.display='block';startWave();updateHud()}
 function lock(){renderer.domElement.requestPointerLock?.();if(audio.state==='suspended')audio.resume()}
-$('start').onclick=()=>{campaignMode=false;reset();lock()};$('again').onclick=()=>{reset();lock()};$('resume').onclick=()=>lock();
+$('start').onclick=()=>{if(realtimeSocket){realtimeSend('leave');realtimeSocket.close();realtimeSocket=null;realtimeId=null;squad=null}campaignMode=false;clearNetworkCombat();clearCampaignMap();reset();lock()};$('again').onclick=()=>{reset();lock()};$('resume').onclick=()=>lock();
 document.addEventListener('pointerlockchange',()=>{if(dead)return;paused=active&&!choosingUpgrade&&document.pointerLockElement!==renderer.domElement;$('pause').style.display=paused?'flex':'none'});
 renderer.domElement.addEventListener('click',()=>{if(active&&!dead&&!choosingUpgrade&&document.pointerLockElement!==renderer.domElement)lock()});
 document.addEventListener('mousemove',e=>{if(!active||paused||dead||choosingUpgrade)return;yaw-=e.movementX*.0022*mouseSensitivity;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.0022*mouseSensitivity,-1.42,1.42)});
@@ -694,16 +694,19 @@ function realtimeConnect(action,code){
    let msg;try{msg=JSON.parse(event.data)}catch{return}
    if(msg.type==='error'){clearTimeout(timeout);$('campaignMessage').textContent=msg.message;reject(Error(msg.message));return}
    if(msg.type==='joined'){clearTimeout(timeout);realtimeId=msg.id;resolve(msg);return}
-   if(msg.type==='state'){squad=msg.squad;renderSquad();syncRemoteSquad()}
+   if(msg.type==='state'&&realtimeSocket===ws){squad=msg.squad;renderSquad();syncRemoteSquad()}
+   if(realtimeSocket!==ws)return;
    if(msg.type==='level'){if(!campaignMode||campaignStage!==msg.level)beginCampaignStage(msg.level)}
    if(msg.type==='heal'&&campaignMode){hp=msg.hp;updateHud()}
-   if(msg.type==='respawn'&&msg.player===realtimeId){hp=msg.hp;dead=false;active=true;player.set(0,1.7,0);notice('RESPAWN — '+msg.lives+' LIVES LEFT',3);updateHud()}
+   if(msg.type==='respawn'&&msg.player===realtimeId){hp=msg.hp;dead=false;active=true;paused=false;player.set(0,1.7,0);verticalVelocity=0;moveVelocity.set(0,0,0);$('over').style.display='none';$('pause').style.display='none';notice('RESPAWN — '+msg.lives+' LIVES LEFT',3);updateHud()}
+   if(msg.type==='eliminated'&&msg.player===realtimeId){dead=true;active=false;paused=false;document.exitPointerLock?.();$('over').style.display='flex';notice('OUT OF LIVES — SPECTATING SQUAD',3)}
+   if(msg.type==='gameOver'&&campaignMode){dead=true;active=false;paused=false;document.exitPointerLock?.();$('over').style.display='flex'}
    if(msg.type==='upgradeBreak')showMultiplayerUpgrade(msg)
    if(msg.type==='upgradeApplied'){Object.assign(upgradeLevels,msg.upgrades);hp=msg.hp;upgradeMaxHealth=100+upgradeLevels.health*20;ammo=Math.min(ammo,maxAmmo());updateHud()}
    if(msg.type==='upgradeResume'){choosingUpgrade=false;upgradeOverlay.style.display='none';notice('WAVE '+msg.wave+' — GO!',2)}
    if(msg.type==='wave'){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount+' — GOBLINS INBOUND',3);tone(420,.3,'sawtooth',.035,220);updateHud()}
-   if(msg.type==='snapshot'&&campaignMode){if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}}}
-   if(msg.type==='damage'){const e=networkEnemies.get(msg.enemy);if(e){e.g.userData['arm-1']&&(e.g.userData['arm-1'].rotation.x=-1.2);e.g.userData['arm1']&&(e.g.userData['arm1'].rotation.x=-1.2)}if(msg.player===realtimeId){hp=msg.hp;updateHud();tone(105,.2,'sawtooth',.04,-55)}}
+   if(msg.type==='snapshot'&&campaignMode){if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){const self=squad?.players?.find(q=>q.id===realtimeId);if(self?.lives===0){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}}}
+   if(msg.type==='damage'){const e=networkEnemies.get(msg.enemy);if(e){e.g.userData['arm-1']&&(e.g.userData['arm-1'].rotation.x=-1.2);e.g.userData['arm1']&&(e.g.userData['arm1'].rotation.x=-1.2)}if(msg.player===realtimeId){if(msg.hp>0)hp=msg.hp;updateHud();tone(105,.2,'sawtooth',.04,-55)}}
    if(msg.type==='shot'&&msg.player!==realtimeId){showNetworkShot(msg);const av=remoteSquadAvatars.get(msg.player);if(av){av.userData.blaster.rotation.x=-.4;setTimeout(()=>{if(av.parent)av.userData.blaster.rotation.x=0},130)}}
    if(msg.type==='arrow'){showNetworkArrow(msg);const e=networkEnemies.get(msg.enemy);if(e)e.lastArrow=performance.now()}
    if(msg.type==='titanAttack'){showNetworkAxe(msg);if(msg.target===realtimeId){hp=msg.hp;updateHud();tone(80,.3,'sawtooth',.05,-50)}}
@@ -724,7 +727,7 @@ async function squadRequest(action,extra={}){
   if(action==='create'||action==='join'){await realtimeConnect(action,extra.code);return squad}
   if(action==='select'){realtimeSend('select',{suit:extra.suit});return squad}
   if(action==='start'){realtimeSend('start');return squad}
-  if(action==='leave'){realtimeSocket?.close();realtimeSocket=null;return null}
+  if(action==='leave'){realtimeSend('leave');realtimeSocket?.close();realtimeSocket=null;realtimeId=null;return null}
   if(action==='position'){realtimeSend('move',{x:extra.x,z:extra.z});return squad}
   if(action==='state'||action==='complete')return squad;
  }
@@ -737,7 +740,7 @@ $('campaignMenuButton').onclick=showCampaign;
 $('closeCampaign').onclick=()=>$('campaignPanel').classList.remove('open');
 $('makeSquad').onclick=async()=>{try{squad=await squadRequest('create');renderSquad()}catch(e){squadError(e)}};
 $('joinSquad').onclick=async()=>{try{squad=await squadRequest('join',{code:$('squadCodeInput').value.toUpperCase().trim()});renderSquad()}catch(e){squadError(e)}};
-$('leaveSquad').onclick=async()=>{try{await squadRequest('leave')}catch(e){}squad=null;campaignMode=false;$('campaignDamageCounter').style.display='none';clearNetworkCombat();clearCampaignMap();$('campaignLobby').style.display='none';$('campaignEntry').style.display='block';$('campaignMessage').textContent='Left squad'};
+$('leaveSquad').onclick=async()=>{try{await squadRequest('leave')}catch(e){}squad=null;campaignMode=false;clearNetworkCombat();clearCampaignMap();$('campaignLobby').style.display='none';$('campaignEntry').style.display='block';$('campaignMessage').textContent='Left squad'};
 $('startCampaign').onclick=async()=>{try{squad=await squadRequest('start');renderSquad()}catch(e){squadError(e)}};
 function renderSquad(){
  if(!squad)return;

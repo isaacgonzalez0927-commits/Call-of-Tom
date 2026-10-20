@@ -319,7 +319,7 @@ function fire(){
 }
 function updateHud(){$('wave').textContent=String(wave).padStart(2,'0');$('remaining').textContent=(enemies.length+spawnLeft+(boss?1:0))+' ANDREWS REMAINING';$('hp').textContent=Math.max(0,Math.ceil(hp));$('hpbar').style.width=hp+'%';$('ammo').textContent=ammo+' / '+maxAmmo();$('score').textContent='SCORE '+String(score).padStart(6,'0')}
 function hurt(amount){hp=Math.max(0,hp-amount);$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170);tone(100,.25,'sawtooth',.05,-60);if(hp<=0){if(campaignMode){campaignMode=false;notice('MISSION FAILED — RETURN TO SQUAD',3);$('campaignPanel').classList.add('open')}dead=true;active=false;$('bossHud').style.display='none';document.exitPointerLock?.();$('over').style.display='flex';$('finalstats').textContent='WAVE '+wave+'  ·  '+kills+' ANDREWS SOAKED  ·  '+score+' POINTS';$('hud').style.display='none'}updateHud()}
-function collide(x,z,radius=.48,feet=0){if(Math.hypot(x,z)>islandRadius-1)return true;return obstacles.some(o=>{if(feet>=0&&mantleSurfaces.some(s=>s.x===o.x&&s.z===o.z&&feet>=s.top-.22))return false;const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48,feet=0){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius,feet))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius,feet))pos.z+=sz}}
+function collide(x,z,radius=.48,feet=0){if(campaignMode&&realtimeServerUrl)return Math.abs(x)>57-radius||Math.abs(z)>57-radius;if(Math.hypot(x,z)>islandRadius-1)return true;return obstacles.some(o=>{if(feet>=0&&mantleSurfaces.some(s=>s.x===o.x&&s.z===o.z&&feet>=s.top-.22))return false;const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48,feet=0){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius,feet))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius,feet))pos.z+=sz}}
 function startMantle(){
  if(mantle||mantleCooldown>0||slideTime>0)return false;
  const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
@@ -686,7 +686,8 @@ function realtimeConnect(action,code){
    if(msg.type==='joined'){clearTimeout(timeout);realtimeId=msg.id;resolve(msg);return}
    if(msg.type==='state'){squad=msg.squad;renderSquad();syncRemoteSquad()}
    if(msg.type==='level'){if(!campaignMode||campaignStage!==msg.level)beginCampaignStage(msg.level)}
-   if(msg.type==='snapshot'&&campaignMode){syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z}}}
+   if(msg.type==='wave'){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount+' — GOBLINS INBOUND',3);tone(420,.3,'sawtooth',.035,220);updateHud()}
+   if(msg.type==='snapshot'&&campaignMode){if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z}}}
    if(msg.type==='damage'&&msg.player===realtimeId){hp=msg.hp;updateHud()}
    if(msg.type==='victory'){$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
   };
@@ -743,7 +744,7 @@ async function pollSquad(){
 setInterval(pollSquad,1700);
 function beginCampaignStage(stage){
  campaignMode=true;campaignStage=stage;campaignReported=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();
- reset();campaignMode=true;campaignStage=stage;
+ reset();campaignMode=true;campaignStage=stage;if(realtimeServerUrl)buildCampaignMap(stage);
  wave=stage*2-1;spawnLeft=stage===1?9:stage===2?15:21;spawnTimer=.4;bossWave=stage===3;
  if(stage===3&&!realtimeServerUrl)spawnBoss();if(realtimeServerUrl){spawnLeft=0;bossWave=false;clearNetworkCombat()}
  $('campaignPanel').classList.remove('open');$('menu').style.display='none';
@@ -759,14 +760,48 @@ async function finishCampaignStage(){
 }
 
 function clearNetworkCombat(){for(const e of networkEnemies.values())scene.remove(e.g);networkEnemies.clear();if(networkBoss){scene.remove(networkBoss);networkBoss=null}$('bossHud').style.display='none'}
+let campaignMapGroup=null,campaignOriginalWorld=null,campaignOriginalBackground=null,campaignOriginalFog=null;
+function clearCampaignMap(){
+ if(campaignMapGroup){scene.remove(campaignMapGroup);campaignMapGroup.traverse(o=>{o.geometry?.dispose?.();if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials)m.dispose?.()}});campaignMapGroup=null}
+ if(campaignOriginalWorld){for(const [o,visible] of campaignOriginalWorld)o.visible=visible;campaignOriginalWorld=null}
+ if(campaignOriginalBackground!==null){scene.background=campaignOriginalBackground;campaignOriginalBackground=null}
+ scene.fog=campaignOriginalFog;campaignOriginalFog=null;
+}
+function buildCampaignMap(stage){
+ if(campaignMapGroup)clearCampaignMap();
+ campaignOriginalWorld=new Map(scene.children.filter(o=>o!==camera&&!o.isLight&&!remoteSquadAvatarsHas(o)&&!o.userData?.campaignMap).map(o=>[o,o.visible]));
+ for(const o of campaignOriginalWorld.keys())o.visible=false;
+ campaignOriginalBackground=scene.background;campaignOriginalFog=scene.fog;
+ const palettes=[null,{ground:0xcdbb87,accent:0x477c58,stone:0x8d8c7b,sky:0x9bcde2},{ground:0x74846c,accent:0x455a4a,stone:0x5a636b,sky:0x869fa7},{ground:0x554850,accent:0xa84c2e,stone:0x292c38,sky:0x543d56}],p=palettes[stage];
+ scene.background=new THREE.Color(p.sky);scene.fog=new THREE.Fog(p.sky,65,155);
+ campaignMapGroup=new THREE.Group();campaignMapGroup.userData.campaignMap=true;scene.add(campaignMapGroup);
+ const ground=new THREE.Mesh(new THREE.BoxGeometry(118,1,118),new THREE.MeshStandardMaterial({color:p.ground,roughness:1}));ground.position.y=-.56;campaignMapGroup.add(ground);
+ const rng=seeded(500+stage*317),rockMat=new THREE.MeshStandardMaterial({color:p.stone,flatShading:true}),accentMat=new THREE.MeshStandardMaterial({color:p.accent,flatShading:true}),trimMat=new THREE.MeshStandardMaterial({color:stage===3?0xf1773c:0xc9a969,flatShading:true});
+ function add(geo,mat,x,y,z){const o=new THREE.Mesh(geo,mat);o.position.set(x,y,z);campaignMapGroup.add(o);return o}
+ for(let i=0;i<28;i++){const a=i*Math.PI*2/28,r=54+rng()*3,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  const h=stage===2?5+rng()*6:2+rng()*5;
+  add(new THREE.CylinderGeometry(1.5+rng()*2,2.4+rng()*2,h,6),rockMat,x,h/2,z);
+  if(stage===1){const trunk=add(new THREE.CylinderGeometry(.18,.3,4,6),rockMat,x,5,z);trunk.rotation.z=.15;add(new THREE.ConeGeometry(2.1,4.5,7),accentMat,x,8,z)}
+  if(stage===2){add(new THREE.BoxGeometry(3.5,1,3.5),trimMat,x,h+.6,z)}
+  if(stage===3){add(new THREE.ConeGeometry(1.8,4+rng()*3,5),rockMat,x,h+1,z);add(new THREE.BoxGeometry(1.6,.15,3),trimMat,x,.05,z)}
+ }
+ for(let i=0;i<18;i++){const x=(rng()-.5)*93,z=(rng()-.5)*93;if(Math.hypot(x,z)<18)continue;
+  if(stage===1){add(new THREE.DodecahedronGeometry(.6+rng()*.6,0),accentMat,x,.45,z)}
+  if(stage===2){const h=2+rng()*2;add(new THREE.CylinderGeometry(.55,.7,h,8),rockMat,x,h/2,z);add(new THREE.BoxGeometry(1.7,.35,1.7),trimMat,x,h+.12,z)}
+  if(stage===3){const o=add(new THREE.ConeGeometry(.8+rng()*.6,2+rng()*2,5),rockMat,x,1.3,z);o.rotation.z=.15}
+ }
+ const titles=['','SUNLIT BEACHHEAD','RUINED FORTRESS','VOLCANIC CRATER'];
+ notice('NEW MAP: '+titles[stage],3.5);
+}
+function remoteSquadAvatarsHas(o){for(const av of remoteSquadAvatars.values())if(av===o)return true;return false}
 function syncCombatSnapshot(s){
  const live=new Set();
- for(const data of s.enemies||[]){live.add(data.id);let e=networkEnemies.get(data.id);if(!e){const g=enemyModel();g.position.set(data.x,0,data.z);const scale=data.type==='brute'?1.35:data.type==='scout'?.78:1;g.scale.setScalar(scale);scene.add(g);e={g};networkEnemies.set(data.id,e)}e.x=data.x;e.z=data.z;e.g.userData.head?.rotation.set(0,Math.sin(performance.now()*.004+data.id)*.1,0)}
+ for(const data of s.enemies||[]){live.add(data.id);let e=networkEnemies.get(data.id);if(!e){const g=enemyModel();g.position.set(data.x,-2.55,data.z);const scale=data.type==='brute'?1.35:data.type==='scout'?.78:1;g.scale.setScalar(scale);scene.add(g);e={g,emerge:0,phase:Math.random()*6.28,attack:0};networkEnemies.set(data.id,e);burst(new THREE.Vector3(data.x,.1,data.z),8,0x8c6c49,3);tone(105,.19,'triangle',.014,-35)}e.x=data.x;e.z=data.z;e.type=data.type;e.hp=data.hp;e.max=data.max;e.attack=(e.attack||0)+.1}
  for(const [id,e] of networkEnemies){if(!live.has(id)){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),9,0x8af6fa,4);scene.remove(e.g);networkEnemies.delete(id)}}
- if(s.boss){if(!networkBoss){networkBoss=enemyModel();networkBoss.scale.setScalar(4.1);scene.add(networkBoss)}networkBoss.position.set(s.boss.x,0,s.boss.z);$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';$('bossFill').style.width=(s.boss.hp/s.boss.max*100)+'%'}else if(networkBoss){scene.remove(networkBoss);networkBoss=null;$('bossHud').style.display='none'}
+ if(s.boss){if(!networkBoss){networkBoss=enemyModel();networkBoss.scale.setScalar(4.1);scene.add(networkBoss);tone(85,.8,'sawtooth',.06,-50);notice('THE ANDREW TITAN HAS ARRIVED',3)}networkBoss.position.set(s.boss.x,0,s.boss.z);$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';$('bossFill').style.width=(s.boss.hp/s.boss.max*100)+'%'}else if(networkBoss){scene.remove(networkBoss);networkBoss=null;$('bossHud').style.display='none'}
  $('remaining').textContent=(networkEnemies.size+(s.spawnLeft||0)+(s.boss?1:0))+' ANDREWS REMAINING';
 }
-function animate(){requestAnimationFrame(animate);if(campaignMode&&realtimeServerUrl&&active&&performance.now()-networkSendAt>90){networkSendAt=performance.now();realtimeSend('move',{x:player.x,z:player.z})}let dt=Math.min(clock.getDelta(),.05);for(const e of networkEnemies.values()){e.g.position.x=THREE.MathUtils.damp(e.g.position.x,e.x,12,dt);e.g.position.z=THREE.MathUtils.damp(e.g.position.z,e.z,12,dt)}for(const av of remoteSquadAvatars.values()){av.position.x=THREE.MathUtils.damp(av.position.x,av.userData.targetX||0,5,dt);av.position.z=THREE.MathUtils.damp(av.position.z,av.userData.targetZ||0,5,dt);av.position.y=0;av.scale.y=1.12}if(active&&!paused&&!dead&&!choosingUpgrade)tick(dt);else if(!active){camera.position.set(Math.sin(performance.now()*.00016)*7,5,14);camera.lookAt(0,2,0)}for(let i=0;i<clouds.length;i++){clouds[i].position.x+=dt*(.5+i*.015);if(clouds[i].position.x>115)clouds[i].position.x=-115}sea.material.opacity=.83+Math.sin(performance.now()*.001)*.04;animateGunReload(dt);drawSpeedLines(dt);renderer.render(scene,camera)}animate();$('loading').textContent='SYSTEMS READY · DESKTOP / MOUSE + KEYBOARD';window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function animate(){requestAnimationFrame(animate);if(campaignMode&&realtimeServerUrl&&active&&performance.now()-networkSendAt>90){networkSendAt=performance.now();realtimeSend('move',{x:player.x,z:player.z})}let dt=Math.min(clock.getDelta(),.05);for(const e of networkEnemies.values()){const moving=Math.hypot(e.x-e.g.position.x,e.z-e.g.position.z)>.04;e.g.position.x=THREE.MathUtils.damp(e.g.position.x,e.x,12,dt);e.g.position.z=THREE.MathUtils.damp(e.g.position.z,e.z,12,dt);e.emerge=Math.min(1,e.emerge+dt*.85);const t=e.emerge,u=t*t*(3-2*t);e.g.position.y=-2.55+2.55*u;e.g.rotation.y=THREE.MathUtils.damp(e.g.rotation.y,Math.atan2(player.x-e.g.position.x,player.z-e.g.position.z),5,dt);const gait=performance.now()*.008*(e.type==='scout'?1.65:e.type==='brute'?.7:1)+e.phase,amp=moving?.62:.1;for(const side of [-1,1]){const leg=e.g.userData['leg'+side],arm=e.g.userData['arm'+side];if(leg)leg.rotation.x=Math.sin(gait+side*1.57)*amp;if(arm){arm.rotation.x=-Math.sin(gait+side*1.57)*amp*.75+Math.sin(performance.now()*.004+e.phase)*.08;arm.rotation.z=side*(.12+Math.sin(gait*.5)*.08)}}if(e.g.userData.head){e.g.userData.head.rotation.z=Math.sin(gait*.5)*.06;e.g.userData.head.rotation.x=Math.sin(gait)*.035}e.g.rotation.z=(1-u)*Math.sin(t*22)*.14}if(networkBoss){networkBoss.position.y=Math.sin(performance.now()*.002)*.13;for(const side of [-1,1]){const arm=networkBoss.userData['arm'+side];if(arm)arm.rotation.x=Math.sin(performance.now()*.004+side)*.48}}for(const av of remoteSquadAvatars.values()){av.position.x=THREE.MathUtils.damp(av.position.x,av.userData.targetX||0,5,dt);av.position.z=THREE.MathUtils.damp(av.position.z,av.userData.targetZ||0,5,dt);av.position.y=0;av.scale.y=1.12}if(active&&!paused&&!dead&&!choosingUpgrade)tick(dt);else if(!active){camera.position.set(Math.sin(performance.now()*.00016)*7,5,14);camera.lookAt(0,2,0)}for(let i=0;i<clouds.length;i++){clouds[i].position.x+=dt*(.5+i*.015);if(clouds[i].position.x>115)clouds[i].position.x=-115}sea.material.opacity=.83+Math.sin(performance.now()*.001)*.04;animateGunReload(dt);drawSpeedLines(dt);renderer.render(scene,camera)}animate();$('loading').textContent='SYSTEMS READY · DESKTOP / MOUSE + KEYBOARD';window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script></body></html// Clean coastal contours: a few rounded polygonal slopes, smooth grass caps and subtle stone bases.
 for(let i=0;i<12;i++){
  const a=(i+.35)*Math.PI*2/12,r=58+rand()*8,x=Math.cos(a)*r,z=Math.sin(a)*r;

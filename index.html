@@ -672,14 +672,14 @@ function drawSpeedLines(dt){const running=active&&!paused&&!dead&&!thirdPerson&&
 }
 
 // Set window.CALL_OF_TOM_SERVER_URL to the deployed wss:// server URL to use realtime squads.
-const realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'';
+let realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'';fetch('/api/multiplayer-config').then(r=>r.json()).then(d=>{if(d.url)realtimeServerUrl=d.url}).catch(()=>{});
 let realtimeSocket=null,realtimeId=null,realtimePending=null;
 function realtimeConnect(action,code){
  return new Promise((resolve,reject)=>{
   if(!realtimeServerUrl)return reject(Error('Real-time server URL is not configured yet'));
-  const ws=new WebSocket(realtimeServerUrl);realtimeSocket=ws;
+  const endpoint=realtimeServerUrl.replace(/\/$/,'')+'/ws'+(action==='create'?'?create=1':'?code='+encodeURIComponent(code||''));const ws=new WebSocket(endpoint);realtimeSocket=ws;
   const timeout=setTimeout(()=>{reject(Error('Server connection timed out'));ws.close()},12000);
-  ws.onopen=()=>ws.send(JSON.stringify({type:action,code}));
+  ws.onopen=()=>ws.send(JSON.stringify({type:'join'}));
   ws.onmessage=event=>{
    let msg;try{msg=JSON.parse(event.data)}catch{return}
    if(msg.type==='error'){clearTimeout(timeout);$('campaignMessage').textContent=msg.message;reject(Error(msg.message));return}
@@ -720,12 +720,12 @@ $('startCampaign').onclick=async()=>{try{squad=await squadRequest('start');rende
 function renderSquad(){
  if(!squad)return;
  $('campaignEntry').style.display='none';$('campaignLobby').style.display='block';$('squadCodeText').textContent=squad.code;
- $('campaignStatus').textContent=squad.status==='lobby'?'Choose unique Toms. Host starts with 2–5 players.':squad.status==='won'?'CAMPAIGN COMPLETED — SQUAD VICTORY!':'MISSION '+squad.stage+'/3 — '+campaignNames[squad.stage]+' · '+squad.completions.length+'/'+squad.players.length+' finished';
- $('startCampaign').style.display=squad.host===squadPlayerId&&squad.status==='lobby'?'inline-block':'none';
+ $('campaignStatus').textContent=squad.status==='lobby'?'Choose unique Toms. Host starts with 2–5 players.':squad.status==='won'?'CAMPAIGN COMPLETED — SQUAD VICTORY!':'MISSION '+squad.stage+'/3 — '+campaignNames[squad.stage]+' · '+(squad.completions||[]).length+'/'+squad.players.length+' finished';
+ $('startCampaign').style.display=squad.host===(realtimeId||squadPlayerId)&&squad.status==='lobby'?'inline-block':'none';
  $('campaignMembers').replaceChildren();
  for(const p of squad.players){
   const item=document.createElement('div');item.className='campaignMember';
-  const name=document.createElement('strong');name.textContent=p.name+(p.id===squad.host?' ★ HOST':'')+(p.id===squadPlayerId?' (YOU)':'');item.append(name);
+  const name=document.createElement('strong');name.textContent=p.name+(p.id===squad.host?' ★ HOST':'')+(p.id===(realtimeId||squadPlayerId)?' (YOU)':'');item.append(name);
   const sel=document.createElement('select');sel.disabled=p.id!==squadPlayerId||squad.status!=='lobby';
   for(const color of Object.keys(suitVariants)){const o=document.createElement('option');o.value=color;o.textContent=color+' Tom';o.selected=color===p.suit;o.disabled=squad.players.some(q=>q.id!==p.id&&q.suit===color);sel.append(o)}
   sel.onchange=async()=>{try{squad=await squadRequest('select',{suit:sel.value});chooseSuit(sel.value);renderSquad()}catch(e){squadError(e);renderSquad()}};item.append(sel);$('campaignMembers').append(item)

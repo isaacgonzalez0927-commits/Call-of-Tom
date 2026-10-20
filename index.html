@@ -186,7 +186,30 @@ function fire(){
 function updateHud(){$('wave').textContent=String(wave).padStart(2,'0');$('remaining').textContent=(enemies.length+spawnLeft+(boss?1:0))+' ANDREWS REMAINING';$('hp').textContent=Math.max(0,Math.ceil(hp));$('hpbar').style.width=hp+'%';$('ammo').textContent=ammo+' / '+maxAmmo();$('score').textContent='SCORE '+String(score).padStart(6,'0')}
 function hurt(amount){hp=Math.max(0,hp-amount);$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170);tone(100,.25,'sawtooth',.05,-60);if(hp<=0){dead=true;active=false;$('bossHud').style.display='none';document.exitPointerLock?.();$('over').style.display='flex';$('finalstats').textContent='WAVE '+wave+'  ·  '+kills+' ANDREWS SOAKED  ·  '+score+' POINTS';$('hud').style.display='none'}updateHud()}
 function collide(x,z,radius=.48,feet=0){if(Math.hypot(x,z)>islandRadius-1)return true;return obstacles.some(o=>{if(feet>0&&mantleSurfaces.some(s=>s.x===o.x&&s.z===o.z&&feet>=s.top-.08))return false;const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);return (x-cx)**2+(z-cz)**2<radius*radius})}function moveWithCollision(pos,dx,dz,radius=.48,feet=0){const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.22));for(let i=0;i<steps;i++){const sx=dx/steps,sz=dz/steps;if(!collide(pos.x+sx,pos.z,radius,feet))pos.x+=sx;if(!collide(pos.x,pos.z+sz,radius,feet))pos.z+=sz}}
-function startMantle(){if(mantle||mantleCooldown>0||slideTime>0)return false;const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));for(const s of mantleSurfaces){if(s.top<.7||s.top>3.1)continue;const nx=THREE.MathUtils.clamp(player.x,s.x-s.w/2,s.x+s.w/2),nz=THREE.MathUtils.clamp(player.z,s.z-s.d/2,s.z+s.d/2);const near=Math.hypot(nx-player.x,nz-player.z);if(near>1.55||near<.05)continue;const toward=(nx-player.x)*forward.x+(nz-player.z)*forward.z;if(toward<.05)continue;const endX=THREE.MathUtils.clamp(nx+forward.x*.8,s.x-s.w/2+.55,s.x+s.w/2-.55),endZ=THREE.MathUtils.clamp(nz+forward.z*.8,s.z-s.d/2+.55,s.z+s.d/2-.55);mantle={start:player.clone(),end:new THREE.Vector3(endX,1.7+s.top,endZ),t:0,duration:.4};verticalVelocity=0;grounded=false;mantleCooldown=.65;tone(290,.13,'triangle',.022,120);return true}return false}
+function startMantle(){
+ if(mantle||mantleCooldown>0||slideTime>0)return false;
+ const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+ let best=null,bestScore=Infinity;
+ for(const s of mantleSurfaces){
+  const feet=player.y-1.7,height=s.top-feet;
+  if(height<.38||height>2.8||s.w<1||s.d<1)continue;
+  const halfW=s.w/2,halfD=s.d/2;
+  const nx=THREE.MathUtils.clamp(player.x,s.x-halfW,s.x+halfW);
+  const nz=THREE.MathUtils.clamp(player.z,s.z-halfD,s.z+halfD);
+  const distance=Math.hypot(nx-player.x,nz-player.z);
+  if(distance>.95)continue;
+  const approach=(nx-player.x)*forward.x+(nz-player.z)*forward.z;
+  if(approach<-.05)continue;
+  // Landing must be well inside the upper surface, not inside the wall.
+  const landX=THREE.MathUtils.clamp(nx+forward.x*.95,s.x-halfW+.48,s.x+halfW-.48);
+  const landZ=THREE.MathUtils.clamp(nz+forward.z*.95,s.z-halfD+.48,s.z+halfD-.48);
+  const score=distance+height*.06;
+  if(score<bestScore){bestScore=score;best={start:player.clone(),end:new THREE.Vector3(landX,1.7+s.top,landZ),t:0,duration:.42+height*.07}}
+ }
+ if(!best)return false;
+ mantle=best;verticalVelocity=0;grounded=false;mantleCooldown=.8;moveVelocity.multiplyScalar(.3);
+ tone(290,.13,'triangle',.022,120);return true
+}
 function damageNumber(amount,position,finish=false){const p=position.clone();p.y+=1.85;p.project(camera);if(p.z>1||p.z< -1)return;const el=document.createElement('div');el.className='damageNumber'+(finish?' finish':'');el.textContent=String(amount);el.style.left=((p.x*.5+.5)*innerWidth)+'px';el.style.top=((-p.y*.5+.5)*innerHeight)+'px';$('damageNumbers').appendChild(el);setTimeout(()=>el.remove(),800)}
 function tick(dt){if(choosingUpgrade)return;elapsed+=dt;castleUseCooldown=Math.max(0,castleUseCooldown-dt);if(keys.KeyE&&!keys._castleE&&castleUseCooldown<=0){for(const p of castleInteractables){if(Math.hypot(player.x-p.x,player.z-p.z)<3.1){if(p.type==='heal'){hp=Math.min(upgradeMaxHealth,hp+40);notice('CASTLE FOUNTAIN +40 HP',1.7)}else if(p.type==='ammo'){ammo=maxAmmo();reloading=false;notice('CASTLE ARMORY: AMMO REFILLED',1.7)}else if(p.type==='training'){score+=150;notice('TARGET PRACTICE +150 POINTS',1.7)}else if(p.type==='bell'){burst(new THREE.Vector3(p.x,4,p.z),35,0xffda62,7);notice('CASTLE BELL RUNG!',2);tone(700,.6,'sine',.06,-250)}else if(p.type==='treasure'){score+=300;notice('TREASURE VAULT +300 POINTS',2);burst(new THREE.Vector3(p.x,1,p.z),20,0xffd15e,5)}else if(p.type==='campfire'){hp=Math.min(upgradeMaxHealth,hp+15);speedBoostUntil=Math.max(speedBoostUntil,elapsed+5);notice('CAMPFIRE: HEAL + SPEED BOOST',2)}castleUseCooldown=12;updateHud();break}}}keys._castleE=!!keys.KeyE;if(elapsed>noticeEnd)$('notice').style.opacity=0;if(reloading&&elapsed>=reloadEnd){reloading=false;ammo=maxAmmo();$('reloadText').textContent='R TO RELOAD';tone(650,.13,'sine',.04);updateHud()}aiming=!!keys.Aim;aimBlend=THREE.MathUtils.damp(aimBlend,aiming?1:0,13,dt);camera.fov=THREE.MathUtils.lerp(76,thirdPerson?57:48,aimBlend);camera.updateProjectionMatrix();$('cross').classList.toggle('ads',aiming);
 mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spaceHeld){if(!startMantle()){verticalVelocity=8.5;grounded=false;tone(280,.08,'sine',.015,150)}}keys._spaceHeld=!!keys.Space;if(keys.ShiftLeft&&sprinting&&grounded&&slideTime<=0&&keys.KeyW){slideTime=1.05;slideDir.set(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(-1);if(moveVelocity.length()<11)moveVelocity.addScaledVector(slideDir,Math.max(0,11-moveVelocity.dot(slideDir)));tone(180,.25,'triangle',.018,-100)}let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
@@ -212,7 +235,7 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&grounded&&!keys._spa
  }
  const actualSpeed=moveVelocity.length(),moving=actualSpeed>.25;
  const v=moveVelocity.clone().multiplyScalar(dt);
- if(mantle){mantle.t=Math.min(1,mantle.t+dt/mantle.duration);const t=mantle.t,s=t*t*(3-2*t);player.lerpVectors(mantle.start,mantle.end,s);player.y+=Math.sin(Math.PI*t)*.45;if(t>=1){mantle=null;grounded=true}}else{
+ if(mantle){mantle.t=Math.min(1,mantle.t+dt/mantle.duration);const t=mantle.t,s=t*t*(3-2*t);player.lerpVectors(mantle.start,mantle.end,s);player.y+=Math.sin(Math.PI*t)*.32;if(t>=1){player.copy(mantle.end);mantle=null;grounded=true;verticalVelocity=0}}else{
  // Move horizontally first; stair and ramp heights are resolved at the destination.
  const beforeX=player.x,beforeZ=player.z;moveWithCollision(player,v.x,v.z,.52,Math.max(0,player.y-1.7));if(Math.abs(player.x-beforeX-v.x)>.035)moveVelocity.x=0;if(Math.abs(player.z-beforeZ-v.z)>.035)moveVelocity.z=0;
  let floor=1.7;
@@ -368,27 +391,46 @@ function detailGun(){
 detailGun();
 const tomChrome=mat(0xc5d5e7,.12,.95),tomArmor=mat(0x17334a,.35,.65),tomVisor=mat(0x74e6ff,.08,.75);
 function makeTom(){
- const g=new THREE.Group(),armor=mat(0x193f58,.35,.55),accent=mat(0x40cce2,.23,.45),face=mat(0xdce4e9,.17,.8),boot=mat(0x17313c,.5,.3),skin=mat(0xd4aa89,.65),gold=mat(0xf2b94e,.28,.7);
- const torso=mesh(new THREE.CylinderGeometry(.4,.48,.92,10),armor,0,1.32,0,g);
- box(.82,.13,.49,tomChrome,0,1.78,0,g);box(.58,.3,.08,accent,0,1.43,.24,g);box(.18,.12,.09,gold,0,1.45,.31,g);for(let i=0;i<3;i++)box(.52,.025,.035,tomChrome,0,1.29-i*.12,.27,g);box(.76,.15,.53,accent,0,.9,0,g);
- const neck=mesh(new THREE.CylinderGeometry(.16,.18,.19,10),face,0,1.87,0,g);
- const head=ball(.36,face,0,2.17,0,g);head.scale.set(.88,1.1,.92);
- // Visor, eyebrows, nose and mouth read clearly from a third-person camera.
- box(.55,.14,.09,tomVisor,0,2.22,.33,g);box(.38,.055,.075,boot,0,1.99,.335,g);for(const side of [-1,1]){ball(.065,boot,side*.15,2.19,.335,g);box(.19,.045,.07,boot,side*.15,2.31,.31,g)}box(.26,.045,.06,boot,0,1.99,.39,g);box(.15,.06,.08,skin,0,2.08,.38,g);
- ball(.09,face,0,2.09,.35,g);for(let s of [-1,1]){ball(.1,face,s*.34,2.14,0,g);ball(.26,tomChrome,s*.51,1.65,0,g);
- const arm=new THREE.Group();arm.position.set(s*.52,1.58,0);g.add(arm);
- mesh(new THREE.CylinderGeometry(.16,.125,.57,9),armor,0,-.28,0,arm);
- ball(.14,face,0,-.62,.02,arm);box(.28,.12,.28,accent,0,-.52,0,arm);box(.3,.2,.32,tomChrome,0,-.39,0,arm);g.userData['arm'+s]=arm;
- const leg=new THREE.Group();leg.position.set(s*.22,.86,0);g.add(leg);
- mesh(new THREE.CylinderGeometry(.17,.14,.72,9),tomChrome,0,-.35,0,leg);
- box(.32,.24,.47,boot,0,-.74,.11,leg);box(.33,.08,.49,accent,0,-.62,.1,leg);g.userData['leg'+s]=leg}
- box(.74,.66,.26,armor,0,1.32,-.37,g);
- const tank=mesh(new THREE.CylinderGeometry(.15,.15,.64,12),mat(0x4dd579,.2),0,1.33,-.56,g);tank.rotation.z=Math.PI/2;
- // Distinct orange and green blaster attached to Tom's right hand.
+ // Silver plated superhero suit inspired by the supplied reference, in the game's low-poly style.
+ const g=new THREE.Group(),silver=mat(0xbcc8d4,.24,.78),bright=mat(0xe4eaf1,.18,.85),shadow=mat(0x4b5866,.52,.36),undersuit=mat(0x27323d,.85,.12),seam=mat(0x8796a5,.4,.5),skin=mat(0xd1a184,.88),hair=mat(0x49382e,.95),eyes=mat(0x20262c,.8);
+ const torso=mesh(new THREE.CylinderGeometry(.42,.34,.91,10),undersuit,0,1.33,0,g);
+ // Overlapping breastplates and segmented abdominal armor.
+ for(const side of [-1,1]){
+  const chest=box(.4,.32,.2,silver,side*.21,1.56,.27,g);chest.rotation.z=side*.13;
+  box(.33,.09,.11,bright,side*.22,1.76,.22,g);
+  box(.32,.12,.13,seam,side*.19,1.33,.27,g);
+  for(let j=0;j<3;j++)box(.31,.075,.14,j%2?silver:shadow,side*.18,1.19-j*.12,.28,g);
+  const shoulder=ball(.29,bright,side*.54,1.66,0,g);shoulder.scale.set(1.1,.67,1.1);
+  box(.38,.12,.42,shadow,side*.55,1.54,0,g);
+  const arm=new THREE.Group();arm.position.set(side*.53,1.55,0);g.add(arm);
+  mesh(new THREE.CylinderGeometry(.17,.14,.52,9),undersuit,0,-.27,0,arm);
+  box(.32,.35,.33,silver,0,-.24,.02,arm);
+  box(.33,.19,.35,bright,0,-.51,.03,arm);
+  ball(.16,shadow,0,-.67,.03,arm);g.userData['arm'+side]=arm;
+  const leg=new THREE.Group();leg.position.set(side*.23,.88,0);g.add(leg);
+  mesh(new THREE.CylinderGeometry(.2,.15,.74,9),undersuit,0,-.35,0,leg);
+  box(.35,.34,.37,silver,0,-.28,.09,leg);
+  box(.34,.28,.36,bright,0,-.57,.08,leg);
+  box(.36,.19,.51,shadow,0,-.79,.13,leg);
+  g.userData['leg'+side]=leg;
+ }
+ box(.76,.15,.49,bright,0,.91,0,g);box(.26,.13,.08,shadow,0,.91,.29,g);
+ mesh(new THREE.CylinderGeometry(.17,.18,.16,9),undersuit,0,1.89,0,g);
+ // Human face and short hair, with a silver neck guard.
+ const head=ball(.35,skin,0,2.17,0,g);head.scale.set(.9,1.13,.89);
+ const scalp=ball(.32,hair,0,2.42,-.055,g);scalp.scale.set(.98,.37,.9);
+ for(const side of [-1,1]){
+  ball(.052,eyes,side*.135,2.21,.306,g);
+  box(.17,.035,.045,hair,side*.135,2.32,.31,g);
+  ball(.072,skin,side*.33,2.15,0,g);
+ }
+ ball(.065,skin,0,2.11,.32,g);
+ box(.17,.025,.035,shadow,0,1.98,.315,g);
+ box(.45,.15,.12,silver,0,1.88,-.17,g);
  const blaster=new THREE.Group();blaster.position.set(.58,1.14,.36);g.add(blaster);
  box(.23,.2,.85,mat(0xf39719,.4),0,0,.3,blaster);
  const bottle=mesh(new THREE.CylinderGeometry(.16,.16,.78,12),mat(0x54cf74,.2),0,.24,.28,blaster);bottle.rotation.x=Math.PI/2;
- const barrel=mesh(new THREE.CylinderGeometry(.07,.07,.9,12),mat(0xc6d6e0,.2,.75),0,-.07,.53,blaster);barrel.rotation.x=Math.PI/2;
+ const barrel=mesh(new THREE.CylinderGeometry(.07,.07,.9,12),bright,0,-.07,.53,blaster);barrel.rotation.x=Math.PI/2;
  g.userData.blaster=blaster;return g
 }
 thirdAvatar=makeTom();scene.add(thirdAvatar);

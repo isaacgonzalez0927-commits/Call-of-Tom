@@ -672,11 +672,11 @@ function drawSpeedLines(dt){const running=active&&!paused&&!dead&&!thirdPerson&&
 }
 
 // Set window.CALL_OF_TOM_SERVER_URL to the deployed wss:// server URL to use realtime squads.
-let realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'';fetch('/api/multiplayer-config').then(r=>r.json()).then(d=>{if(d.url)realtimeServerUrl=d.url}).catch(()=>{});
+let realtimeServerUrl=window.CALL_OF_TOM_SERVER_URL||'wss://call-of-tom.isaacgonzalez0927.workers.dev';fetch('/api/multiplayer-config').then(r=>r.json()).then(d=>{if(d.url)realtimeServerUrl=d.url}).catch(()=>{});
 let realtimeSocket=null,realtimeId=null,realtimePending=null;const networkEnemies=new Map();let networkBoss=null,networkSendAt=0;
 function realtimeConnect(action,code){
  return new Promise((resolve,reject)=>{
-  if(!realtimeServerUrl)return reject(Error('Real-time server URL is not configured yet'));
+  if(!realtimeServerUrl)return reject(Error('Multiplayer server URL is missing'));
   const endpoint=realtimeServerUrl.replace(/\/$/,'')+'/ws'+(action==='create'?'?create=1':'?code='+encodeURIComponent(code||''));const ws=new WebSocket(endpoint);realtimeSocket=ws;
   const timeout=setTimeout(()=>{reject(Error('Server connection timed out'));ws.close()},12000);
   ws.onopen=()=>ws.send(JSON.stringify({type:'join'}));
@@ -731,7 +731,7 @@ function renderSquad(){
   for(const color of Object.keys(suitVariants)){const o=document.createElement('option');o.value=color;o.textContent=color+' Tom';o.selected=color===p.suit;o.disabled=squad.players.some(q=>q.id!==p.id&&q.suit===color);sel.append(o)}
   sel.onchange=async()=>{try{squad=await squadRequest('select',{suit:sel.value});chooseSuit(sel.value);renderSquad()}catch(e){squadError(e);renderSquad()}};item.append(sel);$('campaignMembers').append(item)
  }
- const me=squad.players.find(p=>p.id===squadPlayerId);if(me)chooseSuit(me.suit);
+ const me=squad.players.find(p=>p.id===(realtimeId||squadPlayerId));if(me)chooseSuit(me.suit);
  if(squad.status==='playing'&&(!campaignMode||campaignStage!==squad.stage))beginCampaignStage(squad.stage);
  if(squad.status==='won'&&campaignMode){campaignMode=false;active=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();document.exitPointerLock?.();$('menu').style.display='flex';$('hud').style.display='none';$('campaignPanel').classList.add('open');$('campaignMessage').textContent='VICTORY! All squad members completed all three missions.'}
 }
@@ -763,7 +763,7 @@ function syncCombatSnapshot(s){
  const live=new Set();
  for(const data of s.enemies||[]){live.add(data.id);let e=networkEnemies.get(data.id);if(!e){const g=enemyModel();g.position.set(data.x,0,data.z);const scale=data.type==='brute'?1.35:data.type==='scout'?.78:1;g.scale.setScalar(scale);scene.add(g);e={g};networkEnemies.set(data.id,e)}e.x=data.x;e.z=data.z;e.g.userData.head?.rotation.set(0,Math.sin(performance.now()*.004+data.id)*.1,0)}
  for(const [id,e] of networkEnemies){if(!live.has(id)){burst(e.g.position.clone().add(new THREE.Vector3(0,1,0)),9,0x8af6fa,4);scene.remove(e.g);networkEnemies.delete(id)}}
- if(s.boss){if(!networkBoss){networkBoss=enemyModel();networkBoss.scale.setScalar(4.1);scene.add(networkBoss)}networkBoss.position.set(s.boss.x,0,s.boss.z);$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';$('bossBar').style.width=(s.boss.hp/s.boss.max*100)+'%'}else if(networkBoss){scene.remove(networkBoss);networkBoss=null;$('bossHud').style.display='none'}
+ if(s.boss){if(!networkBoss){networkBoss=enemyModel();networkBoss.scale.setScalar(4.1);scene.add(networkBoss)}networkBoss.position.set(s.boss.x,0,s.boss.z);$('bossHud').style.display='block';$('bossName').textContent='THE ANDREW TITAN';$('bossFill').style.width=(s.boss.hp/s.boss.max*100)+'%'}else if(networkBoss){scene.remove(networkBoss);networkBoss=null;$('bossHud').style.display='none'}
  $('remaining').textContent=(networkEnemies.size+(s.spawnLeft||0)+(s.boss?1:0))+' ANDREWS REMAINING';
 }
 function animate(){requestAnimationFrame(animate);if(campaignMode&&realtimeServerUrl&&active&&performance.now()-networkSendAt>90){networkSendAt=performance.now();realtimeSend('move',{x:player.x,z:player.z})}let dt=Math.min(clock.getDelta(),.05);for(const e of networkEnemies.values()){e.g.position.x=THREE.MathUtils.damp(e.g.position.x,e.x,12,dt);e.g.position.z=THREE.MathUtils.damp(e.g.position.z,e.z,12,dt)}for(const av of remoteSquadAvatars.values()){av.position.x=THREE.MathUtils.damp(av.position.x,av.userData.targetX||0,5,dt);av.position.z=THREE.MathUtils.damp(av.position.z,av.userData.targetZ||0,5,dt);av.position.y=0;av.scale.y=1.12}if(active&&!paused&&!dead&&!choosingUpgrade)tick(dt);else if(!active){camera.position.set(Math.sin(performance.now()*.00016)*7,5,14);camera.lookAt(0,2,0)}for(let i=0;i<clouds.length;i++){clouds[i].position.x+=dt*(.5+i*.015);if(clouds[i].position.x>115)clouds[i].position.x=-115}sea.material.opacity=.83+Math.sin(performance.now()*.001)*.04;animateGunReload(dt);drawSpeedLines(dt);renderer.render(scene,camera)}animate();$('loading').textContent='SYSTEMS READY · DESKTOP / MOUSE + KEYBOARD';window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});

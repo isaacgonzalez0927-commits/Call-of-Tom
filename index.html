@@ -690,7 +690,7 @@ function realtimeConnect(action,code){
    if(msg.type==='gameOver'&&campaignMode){dead=true;active=false;paused=false;document.exitPointerLock?.();$('over').style.display='flex'}
    if(msg.type==='upgradeBreak')showMultiplayerUpgrade(msg)
    if(msg.type==='upgradeApplied'){Object.assign(upgradeLevels,msg.upgrades);hp=msg.hp;upgradeMaxHealth=100+upgradeLevels.health*20;ammo=Math.min(ammo,maxAmmo());updateHud()}
-   if(msg.type==='upgradeResume'){choosingUpgrade=false;upgradeOverlay.style.display='none';notice('WAVE '+msg.wave+' — GO!',2)}
+   if(msg.type==='upgradeResume'){choosingUpgrade=false;paused=false;upgradeOverlay.style.display='none';notice('WAVE '+msg.wave+' — GO!',2)}
    if(msg.type==='wave'){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount+' — GOBLINS INBOUND',3);tone(420,.3,'sawtooth',.035,220);updateHud()}
    if(msg.type==='snapshot'&&campaignMode){if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){const self=squad?.players?.find(q=>q.id===realtimeId);if(self?.lives===0){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}}}
    if(msg.type==='damage'){const e=networkEnemies.get(msg.enemy);if(e){e.g.userData['arm-1']&&(e.g.userData['arm-1'].rotation.x=-1.2);e.g.userData['arm1']&&(e.g.userData['arm1'].rotation.x=-1.2)}if(msg.player===realtimeId){if(msg.hp>0)hp=msg.hp;updateHud();tone(105,.2,'sawtooth',.04,-55)}}
@@ -753,7 +753,17 @@ async function pollSquad(){
 }
 setInterval(pollSquad,1700);
 function showCampaignClickToPlay(){/* Gameplay uses normal click-to-focus, without an intrusive modal. */}
-function showMultiplayerUpgrade(msg){choosingUpgrade=true;keys.Mouse=false;document.exitPointerLock?.();upgradeOverlay.style.display='flex';const options=Object.keys(upgradeLevels).filter(k=>upgradeLevels[k]<upgradeInfo[k][2]).sort(()=>Math.random()-.5).slice(0,3);upgradeOverlay.innerHTML='<h1>WAVE '+msg.wave+' CLEARED</h1><p>CHOOSE ONE UPGRADE — NEXT WAVE IN '+msg.seconds+' SECONDS</p>';const row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:14px;justify-content:center';for(const key of options){const b=document.createElement('button');b.style.cssText='padding:22px;background:#12456a;color:white;border:2px solid #7beaff;border-radius:12px;cursor:pointer;font-size:18px';b.textContent=upgradeInfo[key][0]+' — '+upgradeInfo[key][1];b.onclick=()=>{realtimeSend('upgrade',{key});Object.assign(upgradeLevels,{[key]:upgradeLevels[key]+1});upgradeOverlay.style.display='none';choosingUpgrade=false;notice('UPGRADE SELECTED: '+upgradeInfo[key][0],2)};row.appendChild(b)}upgradeOverlay.appendChild(row)}
+function showMultiplayerUpgrade(msg){
+ choosingUpgrade=true;paused=false;$('pause').style.display='none';keys.Mouse=false;keys.KeyF=false;document.exitPointerLock?.();upgradeOverlay.style.display='flex';
+ const available=Object.keys(upgradeLevels).filter(k=>upgradeLevels[k]<upgradeInfo[k][2]);
+ available.sort(()=>Math.random()-.5);const choices=available.slice(0,3);
+ upgradeOverlay.innerHTML='<h1 style="font-size:clamp(26px,5vw,48px);margin:0 0 12px">WAVE '+msg.wave+' CLEARED</h1><p style="color:#9fe8ff;margin:0 0 25px">CHOOSE ONE PERMANENT UPGRADE</p>';
+ const row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:15px;max-width:900px';
+ const wait=()=>{upgradeOverlay.innerHTML='<h1 style="font-size:clamp(26px,5vw,48px);margin:0 0 12px">UPGRADE SELECTED</h1><p style="color:#9fe8ff;margin:0 0 25px">WAITING FOR THE REST OF YOUR SQUAD...</p>';};
+ if(!choices.length){realtimeSend('upgrade',{key:'none'});wait();return}
+ for(const key of choices){const info=upgradeInfo[key],btn=document.createElement('button');btn.style.cssText='cursor:pointer;background:linear-gradient(160deg,#155c88,#082b52);color:white;border:2px solid #5cd7ff;border-radius:16px;padding:25px 20px;width:240px;min-height:160px;font-size:17px';btn.innerHTML='<strong style="font-size:22px">'+info[0]+'</strong><p>'+info[1]+'</p><small>LEVEL '+upgradeLevels[key]+' / '+info[2]+'</small>';btn.onclick=()=>{realtimeSend('upgrade',{key});btn.disabled=true;wait()};row.appendChild(btn)}
+ upgradeOverlay.appendChild(row);
+}
 function beginCampaignStage(stage){
  campaignMode=true;campaignStage=stage;campaignReported=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();
  reset();campaignMode=true;campaignStage=stage;if(realtimeServerUrl){buildCampaignMap(stage);void 0}

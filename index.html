@@ -56,7 +56,7 @@
 </style></head><body>
 <div id="vignette"></div><div id="damage"></div>
 <div id="hud"><div id="top"><div><div class="brand">CALL OF <span>TOM</span></div><div class="tiny">TIDAL WARFARE</div></div><div class="wave"><small>INCOMING WAVE</small><br><span id="wave">01</span><div class="tiny" id="remaining">0 ANDREWS REMAINING</div></div></div><div id="minimapWrap"><canvas id="minimap" width="256" height="256"></canvas></div><div id="mapCaption">TOM ISLAND · LIVE RADAR</div><div id="modeHint">RMB AIM · T THIRD PERSON</div><div id="score">SCORE 000000</div><div id="cross"><i></i></div><div id="hit">×</div><div id="notice"></div><div id="bottom"><div class="panel"><div class="label">TOM PEARL // VITALS</div><div class="number"><span id="hp">100</span><span style="font-size:18px;color:#88aeba"> / 100</span></div><div class="bar"><div class="fill" id="hpbar"></div></div></div><div style="text-align:right"><div class="label">HYDRO BLASTER MK. I</div><div class="ammo"><span id="ammo">30</span><small> / 30</small></div><div class="tiny" id="reloadText">R TO RELOAD</div></div></div></div>
-<div id="damageNumbers"></div><div id="toast"></div><div id="bossHud"><div id="bossName">THE ANDREW TITAN</div><div id="bossTrack"><div id="bossFill"></div></div></div>
+<div id="damageNumbers"></div><div id="campaignDamageCounter" style="display:none;position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:18;padding:10px 22px;border:1px solid #81dff0;border-radius:12px;background:rgba(8,24,38,.86);color:#f4fdff;font:800 19px system-ui;letter-spacing:1px;pointer-events:none">SQUAD DAMAGE 0</div><div id="toast"></div><div id="bossHud"><div id="bossName">THE ANDREW TITAN</div><div id="bossTrack"><div id="bossFill"></div></div></div>
 <div id="menu">
  <div class="warTop"><div class="warBrand">CALL <span>OF TOM</span></div><nav><button class="selected" data-lobby="lobby">LOBBY</button><button data-lobby="operators">OPERATORS</button><button data-lobby="settings">SETTINGS ⚙</button></nav><div class="warLevel">★ 121</div></div>
  <div class="warOperator"><div class="warHalo"></div><div class="warHelmet">TOM<br>PEARL</div><div class="warSuit">SILVER<br>OPERATOR</div><div class="warFoot">HYDRO UNIT  /  CLASSIFIED</div></div>
@@ -687,13 +687,13 @@ function realtimeConnect(action,code){
    if(msg.type==='state'){squad=msg.squad;renderSquad();syncRemoteSquad()}
    if(msg.type==='level'){if(!campaignMode||campaignStage!==msg.level)beginCampaignStage(msg.level)}
    if(msg.type==='wave'){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount+' — GOBLINS INBOUND',3);tone(420,.3,'sawtooth',.035,220);updateHud()}
-   if(msg.type==='snapshot'&&campaignMode){if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}}}
+   if(msg.type==='snapshot'&&campaignMode){$('campaignDamageCounter').textContent='SQUAD DAMAGE '+(msg.totalDamage||0);if(msg.wave&&wave!==msg.wave){wave=msg.wave;notice('WAVE '+msg.wave+' / '+msg.waveCount,2.5)}syncCombatSnapshot(msg);for(const p of msg.players){if(p.id===realtimeId){if(p.hp<hp){$('damage').style.opacity=.8;setTimeout(()=>$('damage').style.opacity=0,170)}hp=p.hp;updateHud();if(hp<=0&&!dead){dead=true;active=false;document.exitPointerLock?.();$('over').style.display='flex'}continue}const av=remoteSquadAvatars.get(p.id);if(av){av.userData.targetX=p.x;av.userData.targetZ=p.z;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}}}
    if(msg.type==='damage'){const e=networkEnemies.get(msg.enemy);if(e){e.g.userData['arm-1']&&(e.g.userData['arm-1'].rotation.x=-1.2);e.g.userData['arm1']&&(e.g.userData['arm1'].rotation.x=-1.2)}if(msg.player===realtimeId){hp=msg.hp;updateHud();tone(105,.2,'sawtooth',.04,-55)}}
    if(msg.type==='shot'&&msg.player!==realtimeId){showNetworkShot(msg);const av=remoteSquadAvatars.get(msg.player);if(av){av.userData.blaster.rotation.x=-.4;setTimeout(()=>{if(av.parent)av.userData.blaster.rotation.x=0},130)}}
    if(msg.type==='arrow')showNetworkArrow(msg)
    if(msg.type==='titanAttack'){showNetworkAxe(msg);if(msg.target===realtimeId){hp=msg.hp;updateHud();tone(80,.3,'sawtooth',.05,-50)}}
    if(msg.type==='hit'){const e=networkEnemies.get(msg.enemy);if(e){burst(e.g.position.clone().add(new THREE.Vector3(0,1.1,0)),5,0x87e9fa,2.5);e.g.rotation.z=.15}}
-   if(msg.type==='victory'){clearNetworkCombat();clearCampaignMap();$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
+   if(msg.type==='victory'){$('campaignDamageCounter').style.display='none';clearNetworkCombat();clearCampaignMap();$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
   };
   ws.onerror=()=>{clearTimeout(timeout);reject(Error('Cannot reach multiplayer server'))};
   ws.onclose=()=>{if(realtimeSocket===ws)realtimeSocket=null}
@@ -721,7 +721,7 @@ $('campaignMenuButton').onclick=showCampaign;
 $('closeCampaign').onclick=()=>$('campaignPanel').classList.remove('open');
 $('makeSquad').onclick=async()=>{try{squad=await squadRequest('create');renderSquad()}catch(e){squadError(e)}};
 $('joinSquad').onclick=async()=>{try{squad=await squadRequest('join',{code:$('squadCodeInput').value.toUpperCase().trim()});renderSquad()}catch(e){squadError(e)}};
-$('leaveSquad').onclick=async()=>{try{await squadRequest('leave')}catch(e){}squad=null;campaignMode=false;clearNetworkCombat();clearCampaignMap();$('campaignLobby').style.display='none';$('campaignEntry').style.display='block';$('campaignMessage').textContent='Left squad'};
+$('leaveSquad').onclick=async()=>{try{await squadRequest('leave')}catch(e){}squad=null;campaignMode=false;$('campaignDamageCounter').style.display='none';clearNetworkCombat();clearCampaignMap();$('campaignLobby').style.display='none';$('campaignEntry').style.display='block';$('campaignMessage').textContent='Left squad'};
 $('startCampaign').onclick=async()=>{try{squad=await squadRequest('start');renderSquad()}catch(e){squadError(e)}};
 function renderSquad(){
  if(!squad)return;
@@ -738,7 +738,7 @@ function renderSquad(){
  }
  const me=squad.players.find(p=>p.id===(realtimeId||squadPlayerId));if(me)chooseSuit(me.suit);
  if(squad.status==='playing'&&(!campaignMode||campaignStage!==squad.stage))beginCampaignStage(squad.stage);
- if(squad.status==='won'&&campaignMode){clearNetworkCombat();clearCampaignMap();campaignMode=false;active=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();document.exitPointerLock?.();$('menu').style.display='flex';$('hud').style.display='none';$('campaignPanel').classList.add('open');$('campaignMessage').textContent='VICTORY! All squad members completed all three missions.'}
+ if(squad.status==='won'&&campaignMode){$('campaignDamageCounter').style.display='none';clearNetworkCombat();clearCampaignMap();campaignMode=false;active=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();document.exitPointerLock?.();$('menu').style.display='flex';$('hud').style.display='none';$('campaignPanel').classList.add('open');$('campaignMessage').textContent='VICTORY! All squad members completed all three missions.'}
 }
 function syncRemoteSquad(){const live=new Set();if(!squad||!campaignMode)return;for(const p of squad.players){if(p.id===(realtimeId||squadPlayerId))continue;live.add(p.id);let av=remoteSquadAvatars.get(p.id);if(!av){av=makeTom();scene.add(av);remoteSquadAvatars.set(p.id,av)}av.visible=true;av.userData.suitMaterials?.forEach(m=>m.color.setHex(suitVariants[p.suit]));av.userData.targetX=p.x||0;av.userData.targetZ=p.z||0;av.userData.targetYaw=p.yaw||0;av.userData.isMoving=!!p.moving}for(const [id,av] of remoteSquadAvatars){if(!live.has(id)){scene.remove(av);remoteSquadAvatars.delete(id)}}}
 async function pollSquad(){
@@ -750,7 +750,7 @@ function showCampaignClickToPlay(){let el=document.getElementById('campaignClick
 document.addEventListener('pointerlockchange',()=>{const el=document.getElementById('campaignClickToPlay');if(el)el.style.display=campaignMode&&active&&document.pointerLockElement!==renderer.domElement?'block':'none'});
 function beginCampaignStage(stage){
  campaignMode=true;campaignStage=stage;campaignReported=false;for(const av of remoteSquadAvatars.values())scene.remove(av);remoteSquadAvatars.clear();
- reset();campaignMode=true;campaignStage=stage;if(realtimeServerUrl)buildCampaignMap(stage);
+ reset();campaignMode=true;campaignStage=stage;if(realtimeServerUrl){buildCampaignMap(stage);$('campaignDamageCounter').style.display='block'}
  wave=stage*2-1;spawnLeft=stage===1?9:stage===2?15:21;spawnTimer=.4;bossWave=stage===3;
  if(stage===3&&!realtimeServerUrl)spawnBoss();if(realtimeServerUrl){spawnLeft=0;bossWave=false;clearNetworkCombat()}
  $('campaignPanel').classList.remove('open');$('menu').style.display='none';

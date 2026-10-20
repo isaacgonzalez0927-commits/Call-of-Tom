@@ -183,38 +183,38 @@ function notice(t,sec=2){$('notice').textContent=t;$('notice').style.opacity=1;n
 function enemyModel(){
  // Faceted, broad-eared armored goblin inspired by the supplied character concept.
  const g=new THREE.Group(),green=mat(0x62a42e),light=mat(0x8bc442),dark=mat(0x334523),metal=mat(0x43454a,.82),leather=mat(0x95592f),brown=mat(0x63391f),bone=mat(0xe9e0cd),pink=mat(0xd89d8e);
- const body=mesh(new THREE.DodecahedronGeometry(.57,0),green,0,.96,0,g);body.scale.set(1.05,1.22,.76);
- box(.78,.2,.17,leather,0,.69,.43,g);box(.27,.2,.13,metal,0,.69,.54,g);
+ const body=mesh(new THREE.DodecahedronGeometry(.57,0),green,0,.96,0,g);body.scale.set(1.05,1.22,.76);const bronze=mat(0xba8150,.6,.25),edge=mat(0x687076,.4,.6),stitch=mat(0x342b22),shine=mat(0xe6b784),shadowGreen=mat(0x3b7a21);
+ box(.78,.2,.17,leather,0,.69,.43,g);box(.27,.2,.13,metal,0,.69,.54,g);for(let j=0;j<3;j++){const belly=box(.76-j*.07,.12,.16,j===1?shadowGreen:light,0,.98-j*.18,.44,g);belly.rotation.z=(j-1)*.05}box(.64,.18,.1,bronze,0,.54,.48,g);box(.22,.18,.13,edge,0,.54,.56,g);
  const chest=box(.2,.8,.12,leather,0,1.04,.49,g);chest.rotation.z=.6;
  const chest2=box(.2,.8,.12,leather,0,1.04,.49,g);chest2.rotation.z=-.6;
  const head=new THREE.Group();head.position.set(0,1.66,.06);g.add(head);g.userData.head=head;
  const skull=mesh(new THREE.DodecahedronGeometry(.63,0),green,0,0,0,head);skull.scale.set(1.12,.77,.83);
- const jaw=mesh(new THREE.DodecahedronGeometry(.47,0),light,0,-.29,.14,head);jaw.scale.set(1.05,.48,.78);
+ const jaw=mesh(new THREE.DodecahedronGeometry(.47,0),light,0,-.29,.14,head);jaw.scale.set(1.05,.48,.78);const cheekL=mesh(new THREE.DodecahedronGeometry(.23,0),light,-.39,-.22,.32,head),cheekR=mesh(new THREE.DodecahedronGeometry(.23,0),light,.39,-.22,.32,head);cheekL.scale.set(1,.72,.85);cheekR.scale.copy(cheekL.scale);
  for(const side of [-1,1]){
   const ear=mesh(new THREE.ConeGeometry(.29,.96,4),green,side*.76,.14,-.05,head);ear.rotation.z=-side*1.36;ear.rotation.x=Math.PI*.5;
   const inner=mesh(new THREE.ConeGeometry(.17,.65,4),pink,side*.83,.12,.15,head);inner.rotation.z=-side*1.36;inner.rotation.x=Math.PI*.5;
   const brow=box(.37,.14,.17,dark,side*.28,.12,.49,head);brow.rotation.z=side*.25;
-  ball(.17,metal,side*.27,-.02,.48,head);ball(.095,dark,side*.27,-.02,.6,head);
-  const shoulder=mesh(new THREE.DodecahedronGeometry(.35,0),metal,side*.65,1.34,0,g);shoulder.scale.set(1.1,.7,1.15);
+  const socket=mesh(new THREE.DodecahedronGeometry(.205,0),dark,side*.27,-.02,.46,head);socket.scale.set(1.12,.8,.65);ball(.12,mat(0xf5ca50),side*.27,-.035,.585,head);ball(.055,black,side*.27,-.035,.682,head);ball(.025,white,side*.27-.025,.002,.7,head);
+  const shoulder=mesh(new THREE.DodecahedronGeometry(.35,0),metal,side*.65,1.34,0,g);shoulder.scale.set(1.1,.7,1.15);const shoulderRim=box(.63,.1,.52,edge,side*.67,1.21,.01,g);shoulderRim.rotation.z=side*.18;for(let k=0;k<2;k++){const spike=mesh(new THREE.ConeGeometry(.1,.29,5),edge,side*(.71+k*.19),1.52-k*.05,0,g);spike.rotation.z=-side*.5}
   const arm=new THREE.Group();arm.position.set(side*.67,1.25,.04);g.add(arm);
   mesh(new THREE.CylinderGeometry(.19,.16,.55,6),green,0,-.25,0,arm);
-  box(.4,.31,.39,leather,0,-.49,.02,arm);
+  box(.4,.31,.39,leather,0,-.49,.02,arm);box(.39,.075,.4,bronze,0,-.35,.03,arm);for(let k=0;k<2;k++)ball(.035,shine,side*.13,-.5+k*.12,.24,arm);
   box(.33,.12,.4,brown,0,-.65,.04,arm);
   g.userData['arm'+side]=arm;
   const leg=new THREE.Group();leg.position.set(side*.28,.64,0);g.add(leg);
   mesh(new THREE.CylinderGeometry(.23,.18,.5,6),green,0,-.2,0,leg);
-  box(.4,.37,.48,leather,0,-.45,.12,leg);
+  box(.4,.37,.48,leather,0,-.45,.12,leg);box(.41,.09,.5,bronze,0,-.34,.13,leg);box(.39,.11,.57,brown,0,-.61,.19,leg);
   g.userData['leg'+side]=leg;
  }
- const nose=mesh(new THREE.DodecahedronGeometry(.19,0),light,0,-.15,.55,head);nose.scale.set(1.1,.68,1.3);
+ const nose=mesh(new THREE.DodecahedronGeometry(.19,0),light,0,-.15,.55,head);nose.scale.set(1.1,.68,1.3);for(const side of [-1,1]){ball(.025,dark,side*.1,-.19,.72,head);const earring=mesh(new THREE.TorusGeometry(.095,.023,5,9),bronze,side*.77,-.18,.13,head);earring.rotation.y=side*.5}
  box(.64,.17,.1,dark,0,-.36,.51,head);
  for(let i=0;i<5;i++){const tooth=mesh(new THREE.ConeGeometry(.075,.19,4),bone,(i-2)*.145,-.31,.59,head);tooth.rotation.z=Math.PI}
- const hair=mesh(new THREE.DodecahedronGeometry(.53,0),metal,0,.5,-.08,head);hair.scale.set(1.1,.36,.88);
+ const hair=mesh(new THREE.DodecahedronGeometry(.53,0),metal,0,.5,-.08,head);hair.scale.set(1.1,.36,.88);const forehead=box(.85,.13,.28,metal,0,.38,.3,head);forehead.rotation.x=-.16;for(const side of [-1,1]){const sideburn=box(.18,.32,.23,metal,side*.49,.31,.06,head);sideburn.rotation.z=side*.17}
  for(let i=0;i<4;i++){const tuft=mesh(new THREE.ConeGeometry(.18,.4,4),metal,(i-1.5)*.22,.68,-.13,head);tuft.rotation.z=(i-1.5)*.25}
- box(.8,.22,.5,leather,0,.52,0,g);box(.3,.23,.13,metal,0,.52,.32,g);
+ box(.8,.22,.5,leather,0,.52,0,g);box(.3,.23,.13,metal,0,.52,.32,g);for(const side of [-1,1]){const skirt=box(.38,.33,.15,bronze,side*.32,.43,.32,g);skirt.rotation.z=-side*.12;for(let k=0;k<2;k++)ball(.036,metal,side*.28,.56-k*.13,.42,g)}
  const club=new THREE.Group();club.position.set(-.02,-.68,.25);g.userData['arm-1'].add(club);club.rotation.z=-.45;
  mesh(new THREE.CylinderGeometry(.075,.08,.83,6),brown,0,-.37,0,club);
- mesh(new THREE.CylinderGeometry(.26,.19,.44,8),leather,0,-.83,0,club);
+ mesh(new THREE.CylinderGeometry(.26,.19,.44,8),leather,0,-.83,0,club);mesh(new THREE.CylinderGeometry(.285,.285,.075,8),metal,0,-.64,0,club);mesh(new THREE.CylinderGeometry(.285,.285,.075,8),metal,0,-1.04,0,club);for(let k=0;k<3;k++)mesh(new THREE.TorusGeometry(.085,.019,4,8),bronze,0,-.17-k*.11,0,club).rotation.x=Math.PI/2;
  for(let j=0;j<7;j++){const a=j*Math.PI*2/7;const spike=mesh(new THREE.ConeGeometry(.095,.2,4),metal,Math.cos(a)*.24,-.84,Math.sin(a)*.24,club);spike.rotation.z=-Math.cos(a)*Math.PI*.5;spike.rotation.x=Math.sin(a)*Math.PI*.5}
  g.userData.club=club;return g
 }
@@ -533,7 +533,7 @@ function makeTom(){
  g.userData.blaster=blaster;g.userData.suitMaterials=[silver,bright,seam];return g
 }
 thirdAvatar=makeTom();scene.add(thirdAvatar);chooseSuit(chosenSuit);
-function updateAvatar(dt,moving){thirdAvatar.visible=thirdPerson&&active&&!dead;thirdAvatar.position.set(player.x,player.y-1.7,player.z);thirdAvatar.rotation.y=yaw+Math.PI;const stride=moving?Math.sin(walk)*THREE.MathUtils.clamp(moveVelocity.length()/10,0,.95):0;const velocityLean=moving?(sprinting?-.17:-.07):0;thirdAvatar.position.y+=grounded&&moving?Math.abs(Math.sin(walk))*.045:0;thirdAvatar.rotation.z=THREE.MathUtils.damp(thirdAvatar.rotation.z,Math.sin(walk*.5)*.045*THREE.MathUtils.clamp(moveVelocity.length()/12,0,1),8,dt);const airborne=!grounded;thirdAvatar.userData.blaster.rotation.x=THREE.MathUtils.damp(thirdAvatar.userData.blaster.rotation.x,aiming?-.28:0,10,dt);for(let s of [-1,1]){thirdAvatar.userData['leg'+s].rotation.x=THREE.MathUtils.damp(thirdAvatar.userData['leg'+s].rotation.x,mantle?-.8:airborne?-.3:slideTime>0?-.75:stride*s,10,dt);thirdAvatar.userData['arm'+s].rotation.x=THREE.MathUtils.damp(thirdAvatar.userData['arm'+s].rotation.x,mantle?-1.2:airborne?-.4:aiming?-.9:-stride*s*.85-.15,10,dt)}thirdAvatar.rotation.x=THREE.MathUtils.damp(thirdAvatar.rotation.x,mantle?-.2:slideTime>0?-.32:airborne?-.1:velocityLean,9,dt);thirdAvatar.userData.blaster.rotation.z=THREE.MathUtils.damp(thirdAvatar.userData.blaster.rotation.z,aiming?0:Math.sin(walk*.5)*.055*(moving?1:0),9,dt);thirdAvatar.scale.y=THREE.MathUtils.damp(thirdAvatar.scale.y,slideTime>0?.72:1,14,dt);
+function updateAvatar(dt,moving){thirdAvatar.visible=thirdPerson&&active&&!dead;thirdAvatar.position.set(player.x,player.y-1.7,player.z);thirdAvatar.rotation.y=yaw+Math.PI;const stride=moving?Math.sin(walk)*THREE.MathUtils.clamp(moveVelocity.length()/10,0,.95):0;const velocityLean=moving?(sprinting?-.17:-.07):0;thirdAvatar.position.y+=grounded&&moving?Math.abs(Math.sin(walk))*.045:0;thirdAvatar.rotation.z=THREE.MathUtils.damp(thirdAvatar.rotation.z,Math.sin(walk*.5)*.045*THREE.MathUtils.clamp(moveVelocity.length()/12,0,1),8,dt);const airborne=!grounded;thirdAvatar.userData.blaster.rotation.x=THREE.MathUtils.damp(thirdAvatar.userData.blaster.rotation.x,aiming?-.28:0,10,dt);for(let s of [-1,1]){thirdAvatar.userData['leg'+s].rotation.x=THREE.MathUtils.damp(thirdAvatar.userData['leg'+s].rotation.x,mantle?-.8:airborne?-.3:slideTime>0?-.75:stride*s,10,dt);thirdAvatar.userData['arm'+s].rotation.x=THREE.MathUtils.damp(thirdAvatar.userData['arm'+s].rotation.x,mantle?-1.2:airborne?-.4:aiming?-.9:-stride*s*.85-.15,10,dt)}thirdAvatar.rotation.x=THREE.MathUtils.damp(thirdAvatar.rotation.x,mantle?-.2:slideTime>0?-.32:airborne?-.1:velocityLean,9,dt);thirdAvatar.userData.blaster.rotation.z=THREE.MathUtils.damp(thirdAvatar.userData.blaster.rotation.z,aiming?0:Math.sin(walk*.5)*.055*(moving?1:0),9,dt);thirdAvatar.scale.y=THREE.MathUtils.damp(thirdAvatar.scale.y,slideTime>0?.77:1.12,14,dt);
 if(thirdPerson){
  // Follow a stable world-space target: never reset the camera to the player's head each frame.
  // The old per-frame scene-wide raycast and head reset caused major camera jitter and FPS drops.

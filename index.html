@@ -705,8 +705,8 @@ function realtimeConnect(action,code){
    if(msg.type==='shot'&&msg.player!==realtimeId){showNetworkShot(msg);const av=remoteSquadAvatars.get(msg.player);if(av){av.userData.blaster.rotation.x=-.4;setTimeout(()=>{if(av.parent)av.userData.blaster.rotation.x=0},130)}}
    if(msg.type==='arrow')showNetworkArrow(msg)
    if(msg.type==='titanAttack'){showNetworkAxe(msg);if(msg.target===realtimeId){hp=msg.hp;updateHud();tone(80,.3,'sawtooth',.05,-50)}}
-   if(msg.type==='hit'){const e=networkEnemies.get(msg.enemy);if(e){burst(e.g.position.clone().add(new THREE.Vector3(0,1.1,0)),5,0x87e9fa,2.5);e.g.rotation.z=.15}if(msg.shooter===realtimeId)damageNumber(msg.damage||1,new THREE.Vector3(msg.x,0,msg.z),msg.hp<=0)}
-   if(msg.type==='bossHit'&&msg.shooter===realtimeId)damageNumber(msg.damage||1,new THREE.Vector3(msg.x,2,msg.z),msg.hp<=0)
+   if(msg.type==='hit'){const e=networkEnemies.get(msg.enemy);if(e){burst(e.g.position.clone().add(new THREE.Vector3(0,1.1,0)),5,0x87e9fa,2.5);e.g.rotation.z=.15}if(msg.shooter===realtimeId)damageNumber(Math.round(25*(msg.damage||1)),new THREE.Vector3(msg.x,0,msg.z),msg.hp<=0)}
+   if(msg.type==='bossHit'&&msg.shooter===realtimeId)damageNumber(Math.round(10*(msg.damage||1)),new THREE.Vector3(msg.x,2,msg.z),msg.hp<=0)
    if(msg.type==='victory'){clearNetworkCombat();clearCampaignMap();$('campaignMessage').textContent='SQUAD VICTORY — ALL THREE MISSIONS COMPLETE!';campaignMode=false;active=false;document.exitPointerLock?.();$('menu').style.display='flex';$('campaignPanel').classList.add('open')}
   };
   ws.onerror=()=>{clearTimeout(timeout);reject(Error('Cannot reach multiplayer server'))};

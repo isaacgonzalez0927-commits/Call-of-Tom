@@ -157,7 +157,7 @@ function buildCastle(){const cx=castleX,cz=castleZ;
  floorPlatform(cx,cz-15,31,3.7,7.1);floorPlatform(cx-11,cz+15,9,3.7,7.1);floorPlatform(cx+11,cz+15,9,3.7,7.1);
  for(let side of [-1,1])for(let i=-6;i<=6;i++){if(i%2===0){castleBlock(cx+side*17,8.1,cz+i*2.4,2.5,1.5,1.5,castleTrim,false);castleBlock(cx+i*2.4,8.1,cz+side*17,1.5,1.5,2.5,castleTrim,false)}}
  // Corner towers: layered stone shafts, balconies, banners and roofs.
- for(let sx of [-1,1])for(let sz of [-1,1]){const x=cx+sx*16,z=cz+sz*16;mesh(new THREE.CylinderGeometry(3.2,3.7,11.5,10),castleStone,x,5.75,z);obstacle(x,z,5.7,5.7);for(let h of [2.1,4.2,6.3,8.4])mesh(new THREE.CylinderGeometry(3.55,3.55,.2,10),castleTrim,x,h,z);floorPlatform(x,z,6.8,6.8,11.7);mesh(new THREE.ConeGeometry(4.25,3.5,10),castleDark,x,15.4,z);for(let k=0;k<8;k++){const a=k*Math.PI/4;castleBlock(x+Math.sin(a)*3.3,12,z+Math.cos(a)*3.3,.7,.9,.7,castleTrim,false)}}
+ for(let sx of [-1,1])for(let sz of [-1,1]){const x=cx+sx*16,z=cz+sz*16;mesh(new THREE.CylinderGeometry(3.2,3.7,11.5,10),castleStone,x,5.75,z);obstacle(x,z,5.7,5.7,0,11.5);for(let h of [2.1,4.2,6.3,8.4])mesh(new THREE.CylinderGeometry(3.55,3.55,.2,10),castleTrim,x,h,z);floorPlatform(x,z,6.8,6.8,11.7);mesh(new THREE.ConeGeometry(4.25,3.5,10),castleDark,x,15.4,z);for(let k=0;k<8;k++){const a=k*Math.PI/4;castleBlock(x+Math.sin(a)*3.3,12,z+Math.cos(a)*3.3,.7,.9,.7,castleTrim,false)}}
  // Keep the original castle silhouette, gate, towers and battlements.
  // No central floating roof, interior windows, banners, flags or decorative columns.
  for(let i=0;i<11;i++){const z=cz+21+i*2.7;box(9,.12,2.3,castleTrim,cx,.06,z)}
@@ -330,7 +330,7 @@ function collide(x,z,radius=.48,feet=0){
   // Player body occupies the interval [feet, feet + 3.4]; ignore geometry outside it.
   if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;
   const surface=mantleSurfaces.find(s=>s.x===o.x&&s.z===o.z&&s.w===o.w&&s.d===o.d);
-  if(surface&&feet>=surface.top-.65)return false;
+  if(surface&&feet>=surface.top-.05)return false;
   const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);
   return (x-cx)**2+(z-cz)**2<radius*radius;
  });

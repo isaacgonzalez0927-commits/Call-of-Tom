@@ -342,6 +342,7 @@ function moveWithCollision(pos,dx,dz,radius=.48,feet=0){
   const blocked=(nx,nz)=>{
    // Resolve each overlapping collider independently. Escaping one crate must
    // never allow movement through a different wall or tower.
+   if(campaignMode&&realtimeServerUrl)return Math.abs(nx)>55-radius||Math.abs(nz)>55-radius;
    if(Math.hypot(nx,nz)>islandRadius-1)return true;
    return obstacles.some(o=>{
     if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;

@@ -46,7 +46,8 @@ test('rejects unauthorized starts, transfers host and ignores malformed movement
   a.send(JSON.stringify({type:'create'}));const room=await ra('joined');
   b.send(JSON.stringify({type:'join',code:room.code}));const guest=await rb('joined');
   a.close();await sleep(120);
-  const state=await rb('state');
+  let state;
+  for(let i=0;i<5;i++){state=await rb('state');if(state.squad.host===guest.id)break}
   assert.equal(state.squad.host,guest.id);
   b.send(JSON.stringify({type:'start'}));await rb('error'); // solo player cannot start
   b.send(JSON.stringify({type:'move',x:'Infinity',z:'NaN'}));

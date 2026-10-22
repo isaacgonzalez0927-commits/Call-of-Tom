@@ -1,0 +1,1 @@
+{"name":"call-of-tom-tests","private":true,"type":"module","scripts":{"test":"node --test"}}

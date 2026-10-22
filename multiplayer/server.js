@@ -8,7 +8,7 @@ const squads=new Map(),clients=new Map(),COLORS=['Silver','Gold','Diamond','Emer
 const levels=[null,{name:'BEACHHEAD ASSAULT',count:14,hp:2,speed:2.3},{name:'CASTLE SIEGE',count:23,hp:3,speed:3},{name:'TITAN SHOWDOWN',count:30,hp:4,speed:3.6}];
 const send=(ws,obj)=>{if(ws?.readyState===1)ws.send(JSON.stringify(obj))};
 const code=()=>randomBytes(5).toString('hex').slice(0,6).toUpperCase();
-const safe=(v,lo,hi)=>Math.min(hi,Math.max(lo,Number(v)||0));
+const safe=(v,lo,hi)=>{const n=Number(v);return Number.isFinite(n)?Math.min(hi,Math.max(lo,n)):0};
 const publicSquad=s=>({code:s.code,host:s.host,status:s.status,stage:s.stage,players:[...s.players.values()].map(p=>({id:p.id,name:p.name,suit:p.suit,hp:p.hp,x:p.x,z:p.z})),completions:[],enemies:[...s.enemies.values()].map(e=>({id:e.id,x:e.x,z:e.z,hp:e.hp,max:e.max,type:e.type})),boss:s.boss});
 function broadcast(s,obj){for(const p of s.players.values())send(p.ws,obj)}
 function state(s){broadcast(s,{type:'state',squad:publicSquad(s)})}
@@ -17,7 +17,7 @@ function spawnLevel(s,level){
  for(const p of s.players.values()){p.hp=100;p.x=0;p.z=0;p.lastShot=0}
  state(s);broadcast(s,{type:'level',level,name:levels[level].name})
 }
-function endSquad(s){squads.delete(s.code);for(const p of s.players.values())clients.delete(p.ws)}
+function endSquad(s){squads.delete(s.code);for(const p of s.players.values()){send(p.ws,{type:'error',message:'Room closed'});clients.delete(p.ws);p.ws.close(1000,'Room closed')}s.players.clear()}
 const server=http.createServer((req,res)=>{
  res.setHeader('Access-Control-Allow-Origin',origins[0]);res.setHeader('Content-Type','application/json');
  if(req.url==='/health'){res.writeHead(200);return res.end(JSON.stringify({ok:true,squads:squads.size}))}
@@ -54,12 +54,12 @@ wss.on('connection',ws=>{
    if(s.status!=='playing'||p.hp<=0)return;
    const x=safe(m.x,-69,69),z=safe(m.z,-69,69);
    // Server-side speed clamp; clients cannot teleport around the map.
-   const dt=Math.min(.25,Math.max(.016,(Date.now()-(p.lastMove||Date.now()))/1000));p.lastMove=Date.now();
+   const now=Date.now();const dt=Math.min(.25,Math.max(0,(now-(p.lastMove||now-50))/1000));p.lastMove=now;
    const dist=Math.hypot(x-p.x,z-p.z),max=19*dt;
    const k=dist>max?max/dist:1;p.x+=(x-p.x)*k;p.z+=(z-p.z)*k;
   }else if(m.type==='shoot'){
    if(s.status!=='playing'||p.hp<=0||Date.now()-p.lastShot<125)return;
-   p.lastShot=Date.now();const dx=safe(m.dx,-1,1),dz=safe(m.dz,-1,1),mag=Math.hypot(dx,dz);if(mag<.5)return;
+   const dx=safe(m.dx,-1,1),dz=safe(m.dz,-1,1),mag=Math.hypot(dx,dz);if(mag<.5)return;p.lastShot=Date.now();
    const ux=dx/mag,uz=dz/mag;
    let best=null,dist=1e9;
    for(const e of s.enemies.values()){

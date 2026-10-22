@@ -339,12 +339,23 @@ function moveWithCollision(pos,dx,dz,radius=.48,feet=0){
   const sx=dx/steps,sz=dz/steps;
   // When stepping off a crate, never trap the player inside its collider:
   // movement that increases distance from the obstacle must be permitted.
-  const blocked=(nx,nz)=>collide(nx,nz,radius,feet)&&!obstacles.some(o=>{
-   const s=mantleSurfaces.find(v=>v.x===o.x&&v.z===o.z&&v.w===o.w&&v.d===o.d);
-   if(!s||feet<s.top-1.85||feet>s.top+.1)return false;
-   const dist=(x,z)=>Math.hypot(x-THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),z-THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2));
-   return dist(nx,nz)>dist(pos.x,pos.z)+.00001;
-  });
+  const blocked=(nx,nz)=>{
+   // Resolve each overlapping collider independently. Escaping one crate must
+   // never allow movement through a different wall or tower.
+   if(Math.hypot(nx,nz)>islandRadius-1)return true;
+   return obstacles.some(o=>{
+    if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;
+    const cx=THREE.MathUtils.clamp(nx,o.x-o.w/2,o.x+o.w/2);
+    const cz=THREE.MathUtils.clamp(nz,o.z-o.d/2,o.z+o.d/2);
+    if((nx-cx)**2+(nz-cz)**2>=radius*radius)return false;
+    const surface=mantleSurfaces.find(v=>v.x===o.x&&v.z===o.z&&v.w===o.w&&v.d===o.d);
+    if(!surface)return true;
+    if(feet>=surface.top-.05)return false;
+    if(feet<surface.top-1.85||feet>surface.top+.1)return true;
+    const distance=(x,z)=>Math.hypot(x-THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),z-THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2));
+    return distance(nx,nz)<=distance(pos.x,pos.z)+.00001;
+   });
+  };
   if(!blocked(pos.x+sx,pos.z))pos.x+=sx;
   if(!blocked(pos.x,pos.z+sz))pos.z+=sz;
  }

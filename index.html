@@ -329,8 +329,6 @@ function collide(x,z,radius=.48,feet=0){
  return obstacles.some(o=>{
   // Player body occupies the interval [feet, feet + 3.4]; ignore geometry outside it.
   if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;
-  const surface=mantleSurfaces.find(s=>s.x===o.x&&s.z===o.z&&s.w===o.w&&s.d===o.d);
-  if(surface&&feet>=surface.top-.05)return false;
   const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);
   return (x-cx)**2+(z-cz)**2<radius*radius;
  });

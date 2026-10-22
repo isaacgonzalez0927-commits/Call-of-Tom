@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { WebSocket } from 'ws';
@@ -39,4 +39,4 @@ test('lobby creation, joining, authorization and stage start',async()=>{
   assert.ok(snap.players.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)));
  }finally{a.close();b.close()}
 },{timeout:15000});
-process.on('exit',()=>server.kill());
+after(()=>{server.kill();});

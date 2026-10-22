@@ -10,7 +10,8 @@ This is a staged implementation plan. A checked item means code has been committ
 - [ ] Test online join, state synchronization, shooting and damage.
 - [x] Add automated multiplayer lobby/start/movement smoke tests and CI workflow (requires first CI run verification).
 - [x] Harden server movement timing, invalid shot vectors and room cleanup.
-- [ ] Verify automated tests pass in GitHub Actions and fix any failures.
+- [x] Confirm automated multiplayer smoke tests pass in GitHub Actions (run 39707460895).
+- [ ] Perform manual browser/gameplay QA for castle geometry, ladders, ramps, shooting and real multiplayer sessions.
 
 ## Phase 2 — Separate game modes
 - [ ] Define distinct Campaign, Practice and Online states and routes.

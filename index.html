@@ -408,16 +408,16 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if
  for(const p of castleFloors){if(Math.abs(player.x-p.x)<p.w/2-.08&&Math.abs(player.z-p.z)<p.d/2-.08&&player.y>=1.7+p.y-.38)floor=Math.max(floor,1.7+p.y)}
  // Second courtyard staircase has its own climb height and allows passage underneath.
  const secondaryRise=THREE.MathUtils.clamp((castleZ-.35-player.z)/7.8,0,1)*3.9;
- const secondaryStairs=Math.abs(player.x-(castleX-11))<1.5&&player.z<castleZ-.35&&player.z>castleZ-8.6&&(player.y>=1.7+secondaryRise-.85||player.y>3.8);
+ const secondaryStairs=Math.abs(player.x-(castleX-11))<1.5&&player.z<castleZ-.35&&player.z>castleZ-8.6&&player.y>=1.7+secondaryRise-.65;
  if(secondaryStairs)floor=Math.max(floor,1.7+secondaryRise);
  // Stairway rises smoothly as the player walks inward; no individual step collider can snag them.
  const stairStart=castleZ+12.5,stairEnd=castleZ-4.6;
  const stairRise=THREE.MathUtils.clamp((stairStart-player.z)/(stairStart-stairEnd),0,1)*7.1;const onStairs=Math.abs(player.x-(castleX+12.3))<2.35&&player.z<=stairStart&&player.z>=stairEnd;
  // Do not teleport players onto high steps from underneath the staircase.
- const canStandOnStairs=onStairs&&(grounded||player.y>=1.7+stairRise-.65);
+ const canStandOnStairs=onStairs&&player.y>=1.7+stairRise-.65;
  if(canStandOnStairs){floor=Math.max(floor,1.7+stairRise)}
  let climbing=false;
- for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.45&&keys.KeyW&&player.y<1.7+ladder.top+.05){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5.5);if(player.y>=1.7+ladder.top-.12){player.z=ladder.z-1.25;player.y=1.7+ladder.top;grounded=true}else grounded=false;verticalVelocity=0;climbing=true;break}}
+ for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.45&&keys.KeyW&&player.y<1.7+ladder.top+.05&&player.y>=1.7){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5.5);if(player.y>=1.7+ladder.top-.12){player.z=ladder.z-1.25;player.y=1.7+ladder.top;grounded=true}else grounded=false;verticalVelocity=0;climbing=true;break}}
  if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(canStandOnStairs&&player.y<floor+1.3&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
 updatePickups(dt);walk+=moving&&grounded?dt*(actualSpeed*.92+3):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*THREE.MathUtils.clamp(actualSpeed/13,0,1)*.105:0;slideCameraDrop=THREE.MathUtils.damp(slideCameraDrop,slideTime>0?.65:0,slideTime>0?9:5,dt);camera.position.y-=slideCameraDrop;}camera.rotation.order='YXZ';slideCameraRoll=THREE.MathUtils.damp(slideCameraRoll,slideTime>0?Math.sin(elapsed*6)*.025:0,7,dt);camera.rotation.set(pitch,yaw,slideCameraRoll);shake=Math.max(0,shake-dt*.7);const bobStrength=grounded?THREE.MathUtils.clamp(actualSpeed/13,0,1):0;gunBobX=THREE.MathUtils.damp(gunBobX,Math.cos(walk*.5)*.033*bobStrength,10,dt);gunBobY=THREE.MathUtils.damp(gunBobY,Math.sin(walk)*.075*bobStrength,10,dt);gunBobRoll=THREE.MathUtils.damp(gunBobRoll,Math.cos(walk*.5)*.018*bobStrength,9,dt);gunBaseX=THREE.MathUtils.lerp(.53,0,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.51,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.79,aimBlend);gun.position.set(gunBaseX+gunBobX,gunBaseY+gunBobY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();

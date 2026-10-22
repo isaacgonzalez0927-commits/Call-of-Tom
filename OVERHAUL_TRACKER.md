@@ -8,7 +8,9 @@ This is a staged implementation plan. A checked item means code has been committ
 - [ ] Audit all scenery hitboxes and remove invisible blockers.
 - [ ] Repair remaining castle geometry and graphical glitches.
 - [ ] Test online join, state synchronization, shooting and damage.
-- [ ] Add regression checks before larger refactors.
+- [x] Add automated multiplayer lobby/start/movement smoke tests and CI workflow (requires first CI run verification).
+- [x] Harden server movement timing, invalid shot vectors and room cleanup.
+- [ ] Verify automated tests pass in GitHub Actions and fix any failures.
 
 ## Phase 2 — Separate game modes
 - [ ] Define distinct Campaign, Practice and Online states and routes.

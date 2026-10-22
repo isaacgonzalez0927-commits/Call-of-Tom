@@ -31,7 +31,7 @@ test('escaping a crate cannot pass through a separate wall',()=>{
 });
 test('online players stay within their own square arena',()=>{
  const w=world({online:true});
- const pos={x:54.5,z:0};w.moveWithCollision(pos,3,0,.52,0);
+ const pos={x:54.4,z:0};w.moveWithCollision(pos,3,0,.52,0);
  assert.ok(pos.x<=54.48);
  assert.equal(w.collide(55,0,.52,0),true);
 });

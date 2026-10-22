@@ -4,13 +4,14 @@ This is a staged implementation plan. A checked item means code has been committ
 
 ## Phase 1 — Stabilize existing game
 - [x] Make castle and solid crate collisions respect their actual vertical bounds (commit 1e1f1aa).
-- [ ] Test castle entrances, ramparts, ladders, stairs, towers, jump/mantle behavior and projectile impacts.
+- [ ] Browser-test castle entrances, ramparts, ladders, stairs, towers, jump/mantle behavior and projectile impacts.
+- [x] Separate projectile point-height collision from player-body collision (commit 8103b83).
 - [ ] Audit all scenery hitboxes and remove invisible blockers.
 - [ ] Repair remaining castle geometry and graphical glitches.
 - [ ] Test online join, state synchronization, shooting and damage.
 - [x] Add automated multiplayer lobby/start/movement smoke tests and CI workflow (requires first CI run verification).
 - [x] Harden server movement timing, invalid shot vectors and room cleanup.
-- [x] Confirm automated multiplayer smoke tests pass in GitHub Actions (run 39707460895).
+- [x] Confirm automated multiplayer smoke tests pass in GitHub Actions (latest verified run 39709485728).
 - [ ] Perform manual browser/gameplay QA for castle geometry, ladders, ramps, shooting and real multiplayer sessions.
 
 ## Phase 2 — Separate game modes

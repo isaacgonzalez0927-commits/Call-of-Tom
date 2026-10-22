@@ -304,7 +304,7 @@ function fire(){
  if(boss)targets.push({pos:boss.g.position.clone().add(new THREE.Vector3(0,3.5,0)),radius:2.8});
  for(const t of targets){const to=t.pos.clone().sub(viewOrigin),along=to.dot(viewDirection);if(along<0||along>best)continue;const miss=to.clone().addScaledVector(viewDirection,-along).length();if(miss<t.radius){const enter=along-Math.sqrt(Math.max(0,t.radius*t.radius-miss*miss));if(enter<best){best=Math.max(1,enter);target.copy(viewOrigin).addScaledVector(viewDirection,best)}}}
  // Check map obstacle boxes on the same line so walls take priority over enemies.
- for(let d=.3;d<best;d+=.2){const p=viewOrigin.clone().addScaledVector(viewDirection,d);if(p.y>=0&&collide(p.x,p.z,.07,p.y-.07)){target.copy(p);break}}
+ for(let d=.3;d<best;d+=.2){const p=viewOrigin.clone().addScaledVector(viewDirection,d);if(p.y>=0&&projectileBlocked(p.x,p.y,p.z,.07)){target.copy(p);break}}
  gun.updateWorldMatrix(true,false);const origin=thirdPerson?player.clone().add(new THREE.Vector3(Math.cos(yaw)*.42,-.42,-Math.sin(yaw)*.42)):gun.localToWorld(new THREE.Vector3(0,-.105,gunParts.muzzleZ||-1.72));
  const direction=target.clone().sub(origin).normalize();
  const m=mesh(new THREE.SphereGeometry(.095,8,6),new THREE.MeshBasicMaterial({color:0x6ceeff}),origin.x,origin.y,origin.z);m.castShadow=false;
@@ -330,6 +330,16 @@ function collide(x,z,radius=.48,feet=0){
   // Player body occupies the interval [feet, feet + 3.4]; ignore geometry outside it.
   if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;
   const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);
+  return (x-cx)**2+(z-cz)**2<radius*radius;
+ });
+}
+// A shot is a point at a specific height, not a full-height player capsule.
+function projectileBlocked(x,y,z,radius=.07){
+ if(campaignMode&&realtimeServerUrl)return false;
+ return obstacles.some(o=>{
+  if(y<o.bottom||y>o.top)return false;
+  const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2);
+  const cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);
   return (x-cx)**2+(z-cz)**2<radius*radius;
  });
 }

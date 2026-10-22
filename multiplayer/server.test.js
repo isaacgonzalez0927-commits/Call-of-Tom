@@ -39,4 +39,17 @@ test('lobby creation, joining, authorization and stage start',async()=>{
   assert.ok(snap.players.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)));
  }finally{a.close();b.close()}
 },{timeout:15000});
+test('rejects unauthorized starts, transfers host and ignores malformed movement',async()=>{
+ const a=await connect(),b=await connect();
+ try{
+  const ra=inbox(a),rb=inbox(b);
+  a.send(JSON.stringify({type:'create'}));const room=await ra('joined');
+  b.send(JSON.stringify({type:'join',code:room.code}));const guest=await rb('joined');
+  a.close();await sleep(120);
+  const state=await rb('state');
+  assert.equal(state.squad.host,guest.id);
+  b.send(JSON.stringify({type:'start'}));await rb('error'); // solo player cannot start
+  b.send(JSON.stringify({type:'move',x:'Infinity',z:'NaN'}));
+ }finally{a.close();b.close()}
+},{timeout:15000});
 after(()=>{server.kill();});

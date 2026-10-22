@@ -16,11 +16,12 @@ async function connect(){
  }
  throw Error('Multiplayer server did not start');
 }
-function inbox(ws){const queue=[],waiters=[];ws.on('message',raw=>{const m=JSON.parse(raw);const next=waiters.shift();if(next)next(m);else queue.push(m)});return async(type,timeout=3000)=>{
+function inbox(ws){const queue=[];ws.on('message',raw=>queue.push(JSON.parse(raw)));return async(type,timeout=3000)=>{
  const end=Date.now()+timeout;
  while(Date.now()<end){
-  const m=queue.length?queue.shift():await Promise.race([new Promise(resolve=>waiters.push(resolve)),sleep(200).then(()=>null)]);
-  if(m?.type===type)return m;
+  const index=queue.findIndex(m=>m.type===type);
+  if(index>=0)return queue.splice(index,1)[0];
+  await sleep(20);
  }
  throw Error('Timed out waiting for '+type);
 }}

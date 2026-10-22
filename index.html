@@ -101,7 +101,7 @@ const ground=mesh(new THREE.CylinderGeometry(77,77,.55,72),beach,0,-.3,0);ground
 const meadow=mesh(new THREE.CylinderGeometry(70,70,.15,72),turf,0,.04,0);meadow.castShadow=false;
 function seeded(s){return()=>((s=(s*1664525+1013904223)>>>0)/4294967296)}const rand=seeded(81729);
 function clearCastleGround(x,z){return x>-26&&x<26&&z>-72&&z< -12}
-function rock(x,z,r){if(clearCastleGround(x,z))return;const o=mesh(new THREE.DodecahedronGeometry(r,0),rand()>.5?rockDark:rockPale,x,r*.32,z);o.scale.set(1.35,.7,1);o.rotation.y=rand()*6.28;obstacle(x,z,r*1.8,r*1.5)}
+function rock(x,z,r){if(clearCastleGround(x,z))return;const o=mesh(new THREE.DodecahedronGeometry(r,0),rand()>.5?rockDark:rockPale,x,r*.32,z);o.scale.set(1.35,.7,1);o.rotation.y=rand()*6.28;obstacle(x,z,r*1.8,r*1.5,0,r*1.1)}
 function shrub(x,z,s){if(clearCastleGround(x,z))return;const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const greens=[bush,frond,frondLight];for(let j=0;j<7;j++){const a=j*2.39996,r=(j===0?0:.33+rand()*.4)*s;const o=mesh(new THREE.IcosahedronGeometry(s*(j===0?.63:.36+rand()*.13),1),greens[j%3],Math.cos(a)*r,s*(.33+rand()*.12),Math.sin(a)*r,g);o.scale.set(1.15,.67,1.1);o.castShadow=false}for(let j=0;j<5;j++){const a=j*1.257;const leaf=mesh(new THREE.ConeGeometry(.22*s,.9*s,4),greens[j%3],Math.cos(a)*s*.5,s*.4,Math.sin(a)*s*.5,g);leaf.rotation.z=Math.sin(a)*.8;leaf.rotation.x=Math.cos(a)*.8;leaf.castShadow=false}}
 function palm(x,z,s=1){
  if(clearCastleGround(x,z)||Math.hypot(x,z)>75)return;
@@ -127,7 +127,7 @@ function palm(x,z,s=1){
    const material=[leafA,leafB,leafC][j%3].clone();material.side=THREE.DoubleSide;
    mesh(geo,material,0,0,0,crown);
  }
- obstacle(x,z,.85*s,.85*s);
+ obstacle(x,z,.85*s,.85*s,0,(h+1)*s);
 }
 for(let i=0;i<36;i++){let a=rand()*6.283,r=68+rand()*7,x=Math.cos(a)*r,z=Math.sin(a)*r;if(i%3===0)rock(x,z,1+rand()*3);else palm(x,z,.65+rand()*.5)}
 for(let i=0;i<18;i++){let a=rand()*6.283,r=18+rand()*45,x=Math.cos(a)*r,z=Math.sin(a)*r;if(i%5===0)rock(x,z,1+rand()*2);else palm(x,z,.75+rand()*.6)}
@@ -413,10 +413,12 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if
  // Stairway rises smoothly as the player walks inward; no individual step collider can snag them.
  const stairStart=castleZ+12.5,stairEnd=castleZ-4.6;
  const stairRise=THREE.MathUtils.clamp((stairStart-player.z)/(stairStart-stairEnd),0,1)*7.1;const onStairs=Math.abs(player.x-(castleX+12.3))<2.35&&player.z<=stairStart&&player.z>=stairEnd;
- if(onStairs){floor=Math.max(floor,1.7+stairRise)}
+ // Do not teleport players onto high steps from underneath the staircase.
+ const canStandOnStairs=onStairs&&(grounded||player.y>=1.7+stairRise-.65);
+ if(canStandOnStairs){floor=Math.max(floor,1.7+stairRise)}
  let climbing=false;
  for(const ladder of castleLadders){if(Math.hypot(player.x-ladder.x,player.z-ladder.z)<1.45&&keys.KeyW&&player.y<1.7+ladder.top+.05){player.x=THREE.MathUtils.damp(player.x,ladder.x,12,dt);player.z=THREE.MathUtils.damp(player.z,ladder.z,12,dt);player.y=Math.min(1.7+ladder.top,player.y+dt*5.5);if(player.y>=1.7+ladder.top-.12){player.z=ladder.z-1.25;player.y=1.7+ladder.top;grounded=true}else grounded=false;verticalVelocity=0;climbing=true;break}}
- if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y<floor+1.3&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
+ if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(canStandOnStairs&&player.y<floor+1.3&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
 updatePickups(dt);walk+=moving&&grounded?dt*(actualSpeed*.92+3):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*THREE.MathUtils.clamp(actualSpeed/13,0,1)*.105:0;slideCameraDrop=THREE.MathUtils.damp(slideCameraDrop,slideTime>0?.65:0,slideTime>0?9:5,dt);camera.position.y-=slideCameraDrop;}camera.rotation.order='YXZ';slideCameraRoll=THREE.MathUtils.damp(slideCameraRoll,slideTime>0?Math.sin(elapsed*6)*.025:0,7,dt);camera.rotation.set(pitch,yaw,slideCameraRoll);shake=Math.max(0,shake-dt*.7);const bobStrength=grounded?THREE.MathUtils.clamp(actualSpeed/13,0,1):0;gunBobX=THREE.MathUtils.damp(gunBobX,Math.cos(walk*.5)*.033*bobStrength,10,dt);gunBobY=THREE.MathUtils.damp(gunBobY,Math.sin(walk)*.075*bobStrength,10,dt);gunBobRoll=THREE.MathUtils.damp(gunBobRoll,Math.cos(walk*.5)*.018*bobStrength,9,dt);gunBaseX=THREE.MathUtils.lerp(.53,0,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.51,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.79,aimBlend);gun.position.set(gunBaseX+gunBobX,gunBaseY+gunBobY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
 if(boss&&!(campaignMode&&realtimeServerUrl))updateBoss(dt);if(!(campaignMode&&realtimeServerUrl))updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(!(campaignMode&&realtimeServerUrl)&&spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!(campaignMode&&realtimeServerUrl)&&!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(campaignMode)finishCampaignStage();else offerUpgrades()}}

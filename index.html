@@ -95,7 +95,7 @@ function mesh(g,m,x=0,y=0,z=0,parent=scene){let o=new THREE.Mesh(g,m);o.position
 function box(w,h,d,m,x,y,z,p=scene){return mesh(new THREE.BoxGeometry(w,h,d),m,x,y,z,p)}
 function ball(r,m,x,y,z,p=scene){return mesh(new THREE.SphereGeometry(r,12,10),m,x,y,z,p)}
 
-const islandRadius=77,obstacles=[],mantleSurfaces=[];function obstacle(x,z,w,d){obstacles.push({x,z,w,d})}function solidBox(w,h,d,m,x,y,z){let o=box(w,h,d,m,x,y,z);obstacle(x,z,w,d);mantleSurfaces.push({x,z,w,d,top:y+h/2});return o}
+const islandRadius=77,obstacles=[],mantleSurfaces=[];function obstacle(x,z,w,d,bottom=-Infinity,top=Infinity){obstacles.push({x,z,w,d,bottom,top})}function solidBox(w,h,d,m,x,y,z){let o=box(w,h,d,m,x,y,z);obstacle(x,z,w,d,y-h/2,y+h/2);mantleSurfaces.push({x,z,w,d,top:y+h/2});return o}
 const beach=mat(0xc9b995),turf=mat(0x4e9660),rockDark=mat(0x66677e),rockPale=mat(0x9293a8),frond=mat(0x538b57),frondLight=mat(0x89b674),bush=mat(0x5a9b54),palmBark=mat(0x96816a);
 const ground=mesh(new THREE.CylinderGeometry(77,77,.55,72),beach,0,-.3,0);ground.castShadow=false;
 const meadow=mesh(new THREE.CylinderGeometry(70,70,.15,72),turf,0,.04,0);meadow.castShadow=false;
@@ -139,7 +139,7 @@ function crate(x,z){solidBox(2.4,2.4,2.4,wood,x,1.2,z)}for(const [x,z] of [[-15,
 /* Rebuilt playable castle: clear approach, open gateway, walkable ramp, ladders and towers. */
 const castleStone=mat(0x8b8f9c),castleTrim=mat(0xc7c0a7),castleDark=mat(0x53596a),castleWood=mat(0x78523b),castleFlag=mat(0x168ac0);
 const castleX=0,castleZ=-43,castleHalf=17,castleFloors=[],castleStairs=[],castleLadders=[];
-function castleBlock(x,y,z,w,h,d,m=castleStone,solid=true){const o=box(w,h,d,m,x,y,z);if(solid)obstacle(x,z,w,d);return o}
+function castleBlock(x,y,z,w,h,d,m=castleStone,solid=true){const o=box(w,h,d,m,x,y,z);if(solid)obstacle(x,z,w,d,y-h/2,y+h/2);return o}
 function floorPlatform(x,z,w,d,y){box(w,.4,d,castleTrim,x,y-.2,z);castleFloors.push({x,z,w,d,y})}
 const castleInteractables=[];let castleUseCooldown=0;
 function buildCastle(){const cx=castleX,cz=castleZ;
@@ -327,6 +327,8 @@ function collide(x,z,radius=.48,feet=0){
  if(campaignMode&&realtimeServerUrl)return Math.abs(x)>55-radius||Math.abs(z)>55-radius;
  if(Math.hypot(x,z)>islandRadius-1)return true;
  return obstacles.some(o=>{
+  // Player body occupies the interval [feet, feet + 3.4]; ignore geometry outside it.
+  if(feet>=o.top-.05||feet+3.4<=o.bottom+.05)return false;
   const surface=mantleSurfaces.find(s=>s.x===o.x&&s.z===o.z&&s.w===o.w&&s.d===o.d);
   if(surface&&feet>=surface.top-.65)return false;
   const cx=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2),cz=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);

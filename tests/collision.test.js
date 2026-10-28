@@ -72,3 +72,10 @@ test('melee combat has a dedicated binding and is limited to local modes',()=>{
  assert.match(html,/elapsed-lastMeleeAt<\.85/);
  assert.match(html,/closest\.hp-=1\.5/);
 });
+
+test('melee attacks trigger animation in both camera modes',()=>{
+ assert.match(html,/meleeAnimationStart=elapsed/);
+ assert.match(html,/function meleeAnimationAmount\(\)/);
+ assert.match(html,/const punch=meleeAnimationAmount\(\)/);
+ assert.match(html,/punch>0&&s===1/);
+});

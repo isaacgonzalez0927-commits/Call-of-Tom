@@ -30,7 +30,7 @@ This is a staged implementation plan. A checked item means code has been committ
 ## Phase 4 — Story campaign
 - [ ] Write the complete story: Tom must save his island, its people and the other Toms from the Andrews.
 - [ ] Plan levels, cutscenes, character arcs and boss encounters.
-- [ ] Implement campaign mission system, checkpoints and progress saves.
+- [x] Add a playable Chapter 1 prototype: three waves, final Andrew Titan, and completion screen (commit a32a2e5).\n- [ ] Implement full campaign mission system, checkpoints and progress saves.
 - [ ] Build levels and cinematic sequences; polish pacing and sound.
 
 ## Phase 5 — Online, accounts and polish

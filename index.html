@@ -67,7 +67,12 @@
  <div class="warBottom"><div class="warPlay"><div class="warSection">▲ &nbsp; SOLO PRACTICE</div><button id="start">▶ &nbsp; SOLO PRACTICE<span>ENDLESS ISLAND DEFENSE</span></button><p id="loading">Preparing operation...</p></div><div class="warModes"><div class="campaignTile">STORY CAMPAIGN<span>SAVE TOM ISLAND · STORY MODE IN DEVELOPMENT</span><button id="storyMenuButton">CAMPAIGN DETAILS →</button></div><div>ONLINE MULTIPLAYER<span>SQUADS · 3 CO-OP MISSIONS</span><button id="campaignMenuButton">PLAY ONLINE →</button></div><div>OPERATORS<button id="menuOperators">CHOOSE TOM →</button></div></div></div>
  </div>
 <div id="pause"><div class="card"><div class="eyebrow">OPERATION PAUSED</div><div class="hero" style="font-size:100px">HOLD<br><em>FIRE.</em></div><button class="btn" id="resume">RESUME →</button><button class="btn" id="returnHome" style="display:block;background:#263a47;color:white">⌂ RETURN TO HOME</button><button class="btn" id="openSettings" style="display:block;background:#2b4857">SETTINGS / CONTROLS ⚙</button><p class="controls">CLICK RESUME TO LOCK YOUR CURSOR</p></div></div>
-<div id="storyPanel" style="display:none;position:fixed;inset:0;z-index:120;background:rgba(5,12,22,.94);color:#f1f7ff;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:28px"><h2 style="font-size:clamp(32px,6vw,70px);margin:0">STORY CAMPAIGN</h2><p style="max-width:540px;line-height:1.7">Tom must save his island, its people, and the other Toms from the Andrews. Play Chapter 1: defend the beach, repel the Andrews, and defeat their first commander. This is an early playable campaign mission; more chapters are coming.</p><button id="playStory" class="btn" style="max-width:280px">PLAY CHAPTER 1 →</button><button id="closeStory" class="btn" style="max-width:280px">BACK TO MODES</button></div><div id="campaignPanel"><h2>ONLINE MULTIPLAYER</h2><p>2–5 players · Five unique Tom Pearl suits · Three increasingly difficult co-op missions</p><div id="campaignEntry"><button id="makeSquad">CREATE SQUAD</button><input id="squadCodeInput" maxlength="6" placeholder="SQUAD CODE"><button id="joinSquad">JOIN SQUAD</button></div><div id="campaignLobby" style="display:none"><p>SQUAD CODE</p><div class="campaignCode" id="squadCodeText"></div><p id="campaignStatus">Waiting for squad...</p><div id="campaignMembers"></div><button id="startCampaign" style="display:none">START CAMPAIGN</button><button id="leaveSquad">LEAVE SQUAD</button></div><p id="campaignMessage"></p><button id="closeCampaign">BACK TO HOME</button></div><div id="operatorPanel"><h2>SELECT TOM PEARL</h2><p>Choose your operator suit. All five variants are available.</p><div id="operatorChoices"></div><button class="btn" id="closeOperators">BACK TO LOBBY</button></div><div id="settingsPanel"><h2>SETTINGS / CONTROLS</h2><p class="hint">Click a binding and press a key. Escape cancels.</p><div id="bindingRows"></div><div class="settingRow">Sprint activation <select id="sprintModeSetting" style="background:#203d4c;color:white;border:1px solid #79b1c7;padding:7px"><option value="double">Double-tap forward</option><option value="hold">Hold sprint key</option><option value="either">Either method</option></select></div><div class="settingRow">Mouse sensitivity <input id="sensSetting" type="range" min=".5" max="2.5" step=".1" value="1"></div><div class="settingRow">Field of view <input id="fovSetting" type="range" min="65" max="105" value="76"></div><div class="settingRow">Camera shake <input id="shakeSetting" type="checkbox" checked></div><p class="hint">Double-tap forward or use your sprint key (select above). Press the slide key while sprinting. Space near a ledge to mantle. Left click fires; right click aims. V punches nearby Andrews (Practice and Story). Esc pauses.</p><button class="btn" id="closeSettings">BACK</button></div><div id="over"><div class="card"><div class="eyebrow">MISSION REPORT</div><div class="hero" style="font-size:100px">TOM<br><em>DOWN.</em></div><div class="statline" id="finalstats"></div><p class="desc">The Andrews won this round. They won't win the next.</p><button class="btn" id="again">REDEPLOY →</button></div></div>
+<div id="storyPanel" style="display:none;position:fixed;inset:0;z-index:120;background:rgba(5,12,22,.94);color:#f1f7ff;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:28px"><h2 style="font-size:clamp(32px,6vw,70px);margin:0">STORY CAMPAIGN</h2><p style="max-width:540px;line-height:1.7">Tom must save his island, its people, and the other Toms from the Andrews. Play Chapter 1: defend the beach, repel the Andrews, and defeat their first commander. This is an early playable campaign mission; more chapters are coming.</p><button id="playStory" class="btn" style="max-width:280px">PLAY CHAPTER 1 →</button><button id="closeStory" class="btn" style="max-width:280px">BACK TO MODES</button></div><div id="storyScene" style="display:none;position:fixed;inset:0;z-index:130;background:linear-gradient(145deg,#071b29,#143f50 65%,#051018);color:#e9faff;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:26px">
+<div style="font-size:12px;letter-spacing:4px;color:#78e8ff">CALL OF TOM · STORY CAMPAIGN</div>
+<h2 id="storySceneTitle" style="font-size:clamp(30px,6vw,64px);margin:22px 0 8px">DEFEND TOM ISLAND</h2>
+<p id="storySceneDialogue" style="max-width:620px;font-size:clamp(16px,2.8vw,23px);line-height:1.5"></p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px"><button id="storySceneNext" class="btn" style="max-width:220px">CONTINUE →</button><button id="storySceneSkip" class="btn" style="max-width:180px">SKIP</button></div></div>
+<div id="campaignPanel"><h2>ONLINE MULTIPLAYER</h2><p>2–5 players · Five unique Tom Pearl suits · Three increasingly difficult co-op missions</p><div id="campaignEntry"><button id="makeSquad">CREATE SQUAD</button><input id="squadCodeInput" maxlength="6" placeholder="SQUAD CODE"><button id="joinSquad">JOIN SQUAD</button></div><div id="campaignLobby" style="display:none"><p>SQUAD CODE</p><div class="campaignCode" id="squadCodeText"></div><p id="campaignStatus">Waiting for squad...</p><div id="campaignMembers"></div><button id="startCampaign" style="display:none">START CAMPAIGN</button><button id="leaveSquad">LEAVE SQUAD</button></div><p id="campaignMessage"></p><button id="closeCampaign">BACK TO HOME</button></div><div id="operatorPanel"><h2>SELECT TOM PEARL</h2><p>Choose your operator suit. All five variants are available.</p><div id="operatorChoices"></div><button class="btn" id="closeOperators">BACK TO LOBBY</button></div><div id="settingsPanel"><h2>SETTINGS / CONTROLS</h2><p class="hint">Click a binding and press a key. Escape cancels.</p><div id="bindingRows"></div><div class="settingRow">Sprint activation <select id="sprintModeSetting" style="background:#203d4c;color:white;border:1px solid #79b1c7;padding:7px"><option value="double">Double-tap forward</option><option value="hold">Hold sprint key</option><option value="either">Either method</option></select></div><div class="settingRow">Mouse sensitivity <input id="sensSetting" type="range" min=".5" max="2.5" step=".1" value="1"></div><div class="settingRow">Field of view <input id="fovSetting" type="range" min="65" max="105" value="76"></div><div class="settingRow">Camera shake <input id="shakeSetting" type="checkbox" checked></div><p class="hint">Double-tap forward or use your sprint key (select above). Press the slide key while sprinting. Space near a ledge to mantle. Left click fires; right click aims. V punches nearby Andrews (Practice and Story). Esc pauses.</p><button class="btn" id="closeSettings">BACK</button></div><div id="over"><div class="card"><div class="eyebrow">MISSION REPORT</div><div class="hero" style="font-size:100px">TOM<br><em>DOWN.</em></div><div class="statline" id="finalstats"></div><p class="desc">The Andrews won this round. They won't win the next.</p><button class="btn" id="again">REDEPLOY →</button></div></div>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.169.0';
 const $=id=>document.getElementById(id),scene=new THREE.Scene();const suitVariants={Silver:0xbcc8d4,Gold:0xffc643,Diamond:0x65ecff,Emerald:0x32d985,Ruby:0xe43f5e};let chosenSuit='Silver';
@@ -285,6 +290,25 @@ let storyMode=false;
 const storyProgressKey='call-of-tom-story-progress-v1';
 let storyChapterComplete=false;
 try{storyChapterComplete=localStorage.getItem(storyProgressKey)==='chapter1'}catch(e){}
+let storySceneSteps=[],storySceneIndex=0,storySceneDone=null;
+function showStoryScene(steps,onDone){
+ storySceneSteps=steps;storySceneIndex=0;storySceneDone=onDone;
+ $('storyScene').style.display='flex';renderStoryScene();
+}
+function renderStoryScene(){
+ const step=storySceneSteps[storySceneIndex];
+ if(!step)return finishStoryScene();
+ $('storySceneTitle').textContent=step.title;
+ $('storySceneDialogue').textContent=step.dialogue;
+ $('storySceneNext').textContent=storySceneIndex===storySceneSteps.length-1?'START MISSION →':'CONTINUE →';
+}
+function finishStoryScene(){
+ $('storyScene').style.display='none';
+ const done=storySceneDone;storySceneDone=null;storySceneSteps=[];
+ if(done)done();
+}
+$('storySceneNext').onclick=()=>{storySceneIndex++;renderStoryScene()};
+$('storySceneSkip').onclick=finishStoryScene;
 function storyPanelRefresh(){
  const panel=$('storyPanel');
  panel.querySelector('p').textContent=storyChapterComplete
@@ -936,7 +960,18 @@ function showCampaign(){$('campaignPanel').classList.add('open');$('campaignMess
 $('campaignMenuButton').onclick=showCampaign;
 $('storyMenuButton').onclick=()=>{storyPanelRefresh();$('storyPanel').style.display='flex'};
 $('closeStory').onclick=()=>{$('storyPanel').style.display='none'};
-$('playStory').onclick=()=>{storyMode=true;campaignMode=false;$('storyPanel').style.display='none';reset();notice('CHAPTER 1 — DEFEND TOM ISLAND',4);lock()};
+$('playStory').onclick=()=>{
+ $('storyPanel').style.display='none';
+ showStoryScene([
+  {title:'CHAPTER 1 — THE INVASION',dialogue:'Tom Island was peaceful... until the Andrews arrived on the beach.'},
+  {title:'RICKY',dialogue:'Stay close, Tom! My shield can stop their attacks, but I need time between blocks.'},
+  {title:'LITTLE ANDREW',dialogue:'I am on your side! I will help you recover when you get hurt.'},
+  {title:'DEFEND TOM ISLAND',dialogue:'Survive three waves, protect the beach, and defeat the Andrew Titan.'}
+ ],()=>{
+  storyMode=true;campaignMode=false;reset();
+  notice('CHAPTER 1 — DEFEND TOM ISLAND',4);lock();
+ });
+};
 $('closeCampaign').onclick=()=>$('campaignPanel').classList.remove('open');
 $('makeSquad').onclick=async()=>{try{squad=await squadRequest('create');renderSquad()}catch(e){squadError(e)}};
 $('joinSquad').onclick=async()=>{try{squad=await squadRequest('join',{code:$('squadCodeInput').value.toUpperCase().trim()});renderSquad()}catch(e){squadError(e)}};
@@ -1277,7 +1312,16 @@ mantleCooldown=Math.max(0,mantleCooldown-dt);if(keys.Space&&!keys._spaceHeld){if
  if(!climbing){verticalVelocity-=23*dt;player.y+=verticalVelocity*dt;if(onStairs&&player.y>=1.7+stairRise-1.05&&player.y<floor+.5&&verticalVelocity<=0){player.y=floor;verticalVelocity=0;grounded=true}else if(player.y<=floor){player.y=floor;verticalVelocity=0;grounded=true}else grounded=false}
 }
 updatePickups(dt);walk+=moving&&grounded?dt*(actualSpeed*.92+3):0;if(!thirdPerson){camera.position.copy(player);camera.position.y+=moving&&grounded?Math.sin(walk)*THREE.MathUtils.clamp(actualSpeed/13,0,1)*.105:0;slideCameraDrop=THREE.MathUtils.damp(slideCameraDrop,slideTime>0?.65:0,slideTime>0?9:5,dt);camera.position.y-=slideCameraDrop;}camera.rotation.order='YXZ';slideCameraRoll=THREE.MathUtils.damp(slideCameraRoll,slideTime>0?Math.sin(elapsed*6)*.025:0,7,dt);camera.rotation.set(pitch,yaw,slideCameraRoll);shake=Math.max(0,shake-dt*.7);const bobStrength=grounded?THREE.MathUtils.clamp(actualSpeed/13,0,1):0;gunBobX=THREE.MathUtils.damp(gunBobX,Math.cos(walk*.5)*.033*bobStrength,10,dt);gunBobY=THREE.MathUtils.damp(gunBobY,Math.sin(walk)*.075*bobStrength,10,dt);gunBobRoll=THREE.MathUtils.damp(gunBobRoll,Math.cos(walk*.5)*.018*bobStrength,9,dt);gunBaseX=THREE.MathUtils.lerp(.53,0,aimBlend);gunBaseY=THREE.MathUtils.lerp(-.55,-.51,aimBlend);gunBaseZ=THREE.MathUtils.lerp(-.94,-.79,aimBlend);gun.position.set(gunBaseX+gunBobX,gunBaseY+gunBobY,gunBaseZ);gun.scale.setScalar(.72);gun.visible=!thirdPerson;updateAvatar(dt,moving);updateMinimap();if(keys.Mouse||keys.KeyF)fire();
-if(boss)updateBoss(dt);updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(storyMode&&wave>=3){storyMode=false;$('storyObjective').style.display='none';storyChapterComplete=true;try{localStorage.setItem(storyProgressKey,'chapter1')}catch(e){}active=false;document.exitPointerLock?.();$('hud').style.display='none';$('menu').style.display='flex';$('storyPanel').style.display='flex';storyPanelRefresh();notice('CHAPTER 1 COMPLETE',4)}else offerUpgrades()}}
+if(boss)updateBoss(dt);updateTitanAxes(dt);if(muzzleLight)muzzleLight.intensity=Math.max(0,muzzleLight.intensity-dt*110);if(spawnLeft>0){spawnTimer-=dt;if(spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.32,1.25-wave*.04);updateHud()}}else if(!enemies.length&&!boss){if(!between){between=elapsed+3;notice('AREA CLEAR  +  '+(wave*100)+' BONUS',2.5);score+=wave*100;hp=Math.min(upgradeMaxHealth,hp+15);updateHud()}else if(elapsed>=between){between=0;if(storyMode&&wave>=3){
+ storyMode=false;$('storyObjective').style.display='none';storyChapterComplete=true;
+ try{localStorage.setItem(storyProgressKey,'chapter1')}catch(e){}
+ active=false;document.exitPointerLock?.();$('hud').style.display='none';$('menu').style.display='flex';
+ showStoryScene([
+  {title:'CHAPTER 1 COMPLETE',dialogue:'The Andrew Titan has fallen. Tom Island is safe... for now.'},
+  {title:'RICKY',dialogue:'We held the beach, Tom. But that was only their first commander.'},
+  {title:'TO BE CONTINUED',dialogue:'More Andrews are coming. Chapter 2 is in development.'}
+ ],()=>{$('storyPanel').style.display='flex';storyPanelRefresh()});
+ }else offerUpgrades()}}
 for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],g=e.g;
  if(e.emerge<1){
  const old=e.emerge;e.emerge=Math.min(1,old+dt*.58);const t=e.emerge;

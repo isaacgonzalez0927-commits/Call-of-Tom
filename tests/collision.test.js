@@ -64,3 +64,11 @@ test('Ricky follows only in story mode and blocks hits on a cooldown',()=>{
  assert.match(html,/amount=Math\.max\(0,amount\*\.35\)/);
  assert.match(html,/updateRicky\(dt\)/);
 });
+
+test('melee combat has a dedicated binding and is limited to local modes',()=>{
+ assert.match(html,/\['Melee','KeyV'\]/);
+ assert.match(html,/function meleeAttack\(\)/);
+ assert.match(html,/if\(!active\|\|paused\|\|dead\|\|choosingUpgrade\|\|campaignMode\)return/);
+ assert.match(html,/elapsed-lastMeleeAt<\.85/);
+ assert.match(html,/closest\.hp-=1\.5/);
+});

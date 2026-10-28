@@ -35,3 +35,13 @@ test('online players stay within their own square arena',()=>{
  assert.ok(pos.x<=54.48);
  assert.equal(w.collide(55,0,.52,0),true);
 });
+
+test('three distinct menu entries keep story separate from online squads',()=>{
+ assert.match(html,/id="start"[^>]*>[^<]*SOLO PRACTICE/);
+ assert.match(html,/id="storyMenuButton"/);
+ assert.match(html,/id="campaignMenuButton"/);
+ assert.match(html,/id="storyPanel"/);
+ assert.match(html,/id="campaignPanel"/);
+ assert.match(html,/storyMenuButton'\)\.onclick/);
+ assert.match(html,/campaignMenuButton'\)\.onclick=showCampaign/);
+});

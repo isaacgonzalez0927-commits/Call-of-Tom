@@ -22,7 +22,7 @@ This is a staged implementation plan. A checked item means code has been committ
 
 ## Phase 3 — Combat and companions
 - [x] Add a first Ricky model, story following behavior, and timed shield blocking (commit 0b75f10).\n- [ ] Polish Ricky's animations and add his Practice appearance.
-- [ ] Add Little Andrew companion AI, dialogue and support behavior.
+- [x] Add Little Andrew's first story-only follow and healing support behavior (commit e9b3f6e).\n- [ ] Add Little Andrew dialogue, polished animations, and final face art.
 - [ ] Implement hand-to-hand combat with animation, range, cooldown and damage rules.
 - [ ] Expand water weapons with unique handling, balance and effects.
 - [ ] Replace placeholder character faces and surfaces with licensed/original textures.

@@ -79,3 +79,12 @@ test('melee attacks trigger animation in both camera modes',()=>{
  assert.match(html,/const punch=meleeAnimationAmount\(\)/);
  assert.match(html,/punch>0&&s===1/);
 });
+
+test('story objective HUD shows live companion ability readiness',()=>{
+ assert.match(html,/id="storyObjective"/);
+ assert.match(html,/id="storyObjectiveText"/);
+ assert.match(html,/id="storySupportText"/);
+ assert.match(html,/elapsed>=rickyBlockReady/);
+ assert.match(html,/elapsed>=littleAndrewNextHelp/);
+ assert.match(html,/if\(storyMode&&active&&!dead\)updateHud\(\)/);
+});

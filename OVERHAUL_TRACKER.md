@@ -18,7 +18,7 @@ This is a staged implementation plan. A checked item means code has been committ
 - [ ] Define distinct Campaign, Practice and Online states and routes.
 - [ ] Preserve existing practice gameplay during migration.
 - [ ] Separate network multiplayer from the new single-player story campaign.
-- [ ] Build a clear three-mode main menu and save data boundaries.
+- [x] Display three distinct main-menu entries: Story Campaign (development preview), Solo Practice (playable), and Online Multiplayer (existing squad gameplay).\n- [ ] Implement story campaign gameplay and separate save data boundaries.
 
 ## Phase 3 — Combat and companions
 - [ ] Add Ricky, shield blocking, animation and campaign/practice appearances.

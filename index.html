@@ -293,7 +293,7 @@ function storyPanelRefresh(){
  $('playStory').textContent=storyChapterComplete?'REPLAY CHAPTER 1 →':'PLAY CHAPTER 1 →';
 }
 function startWave(){wave++;bossWave=storyMode ? wave===3 : wave%5===0;spawnLeft=storyMode ? (wave===1?7:wave===2?11:13) : (bossWave?6+wave:5+wave*3);spawnTimer=.2;if(bossWave)spawnBoss();notice(storyMode ? ('CHAPTER 1 · OBJECTIVE '+wave+'/3 — '+(wave===3?'DEFEAT THE ANDREW TITAN':'DEFEND THE BEACH')) : ('WAVE '+String(wave).padStart(2,'0')+' — ANDREWS INBOUND'),3);tone(440,.3,'sawtooth',.03,400)}
-function reset(){rickyBlockReady=0;rickyShieldFlash=0;ricky.position.set(1.5,0,2);ricky.visible=false;thirdPerson=false;aiming=false;aimBlend=0;keys.Mouse=false;keys.Aim=false;fireAt=-1;camera.fov=preferredFov;camera.updateProjectionMatrix();if(boss){for(const w of boss.shockwaves||[])scene.remove(w.m);scene.remove(boss.g);$('bossHud').style.display='none'}for(const e of enemies){scene.remove(e.g);if(e.spawnRing)scene.remove(e.spawnRing)}enemies.length=0;for(const s of shots)scene.remove(s.m);shots.length=0;for(const a of enemyArrows)scene.remove(a.m);enemyArrows.length=0;for(const a of titanAxes)scene.remove(a.m);titanAxes.length=0;for(const p of particles)scene.remove(p.m);particles.length=0;$('damageNumbers').replaceChildren();keys._spaceHeld=false;reloadStart=0;moveVelocity.set(0,0,0);gunBobX=gunBobY=gunBobRoll=gunRecoil=0;slideCameraDrop=slideCameraRoll=0;sprinting=false;lastWPress=-10;keys._castleE=false;castleUseCooldown=0;wave=0;score=0;upgradeMaxHealth=100;for(const key in upgradeLevels)upgradeLevels[key]=0;choosingUpgrade=false;upgradeOverlay.style.display='none';hp=100;ammo=maxAmmo();verticalVelocity=0;grounded=true;slideTime=0;mantle=null;mantleCooldown=0;boss=null;bossWave=false;kills=0;elapsed=0;spawnLeft=0;between=0;reloading=false;dead=false;active=true;paused=false;yaw=0;pitch=0;player.set(0,1.7,0);speedBoostUntil=0;for(const p of pickups){p.available=true;p.g.visible=true;p.respawn=0}camera.rotation.set(0,0,0);$('menu').style.display='none';$('over').style.display='none';$('pause').style.display='none';$('hud').style.display='block';startWave();updateHud()}
+function reset(){rickyBlockReady=0;rickyShieldFlash=0;rickyWalkPhase=0;ricky.position.set(1.5,0,2);ricky.visible=false;thirdPerson=false;aiming=false;aimBlend=0;keys.Mouse=false;keys.Aim=false;fireAt=-1;camera.fov=preferredFov;camera.updateProjectionMatrix();if(boss){for(const w of boss.shockwaves||[])scene.remove(w.m);scene.remove(boss.g);$('bossHud').style.display='none'}for(const e of enemies){scene.remove(e.g);if(e.spawnRing)scene.remove(e.spawnRing)}enemies.length=0;for(const s of shots)scene.remove(s.m);shots.length=0;for(const a of enemyArrows)scene.remove(a.m);enemyArrows.length=0;for(const a of titanAxes)scene.remove(a.m);titanAxes.length=0;for(const p of particles)scene.remove(p.m);particles.length=0;$('damageNumbers').replaceChildren();keys._spaceHeld=false;reloadStart=0;moveVelocity.set(0,0,0);gunBobX=gunBobY=gunBobRoll=gunRecoil=0;slideCameraDrop=slideCameraRoll=0;sprinting=false;lastWPress=-10;keys._castleE=false;castleUseCooldown=0;wave=0;score=0;upgradeMaxHealth=100;for(const key in upgradeLevels)upgradeLevels[key]=0;choosingUpgrade=false;upgradeOverlay.style.display='none';hp=100;ammo=maxAmmo();verticalVelocity=0;grounded=true;slideTime=0;mantle=null;mantleCooldown=0;boss=null;bossWave=false;kills=0;elapsed=0;spawnLeft=0;between=0;reloading=false;dead=false;active=true;paused=false;yaw=0;pitch=0;player.set(0,1.7,0);speedBoostUntil=0;for(const p of pickups){p.available=true;p.g.visible=true;p.respawn=0}camera.rotation.set(0,0,0);$('menu').style.display='none';$('over').style.display='none';$('pause').style.display='none';$('hud').style.display='block';startWave();updateHud()}
 function lock(){renderer.domElement.requestPointerLock?.();if(audio.state==='suspended')audio.resume()}
 $('start').onclick=()=>{storyMode=false;if(realtimeSocket){realtimeSend('leave');realtimeSocket.close();realtimeSocket=null;realtimeId=null;squad=null}campaignMode=false;clearNetworkCombat();clearCampaignMap();reset();lock()};$('again').onclick=()=>{if(!storyMode)campaignMode=false;reset();if(storyMode)notice('CHAPTER 1 — RETRY',3);lock()};$('resume').onclick=()=>lock();
 document.addEventListener('pointerlockchange',()=>{if(dead)return;paused=active&&!choosingUpgrade&&document.pointerLockElement!==renderer.domElement;$('pause').style.display=paused?'flex':'none'});
@@ -340,12 +340,12 @@ const rickyArmor=new THREE.MeshStandardMaterial({color:0x9ac8d7,metalness:.45,ro
 const rickyShieldMat=new THREE.MeshStandardMaterial({color:0x3cb9d9,metalness:.5,roughness:.3});
 box(.9,1.05,.55,rickyBlue,0,1.05,0,ricky);
 box(.63,.63,.63,rickyArmor,0,1.94,0,ricky);
-box(.28,.7,.3,rickyBlue,-.24,.36,0,ricky);
-box(.28,.7,.3,rickyBlue,.24,.36,0,ricky);
-box(.22,.78,.3,rickyArmor,.55,1.15,0,ricky);
+const rickyLeftLeg=box(.28,.7,.3,rickyBlue,-.24,.36,0,ricky);
+const rickyRightLeg=box(.28,.7,.3,rickyBlue,.24,.36,0,ricky);
+const rickyRightArm=box(.22,.78,.3,rickyArmor,.55,1.15,0,ricky);
 const rickyShield=box(.85,1.15,.16,rickyShieldMat,.78,1.2,.18,ricky);
 scene.add(ricky);ricky.visible=false;
-let rickyBlockReady=0,rickyShieldFlash=0;
+let rickyBlockReady=0,rickyShieldFlash=0,rickyWalkPhase=0;
 function updateRicky(dt){
  ricky.visible=storyMode&&active&&!dead;
  if(!ricky.visible)return;
@@ -354,11 +354,18 @@ function updateRicky(dt){
  ricky.position.x=THREE.MathUtils.damp(ricky.position.x,targetX,4,dt);
  ricky.position.z=THREE.MathUtils.damp(ricky.position.z,targetZ,4,dt);
  ricky.rotation.y=THREE.MathUtils.damp(ricky.rotation.y,yaw+Math.PI,5,dt);
+ const moving=Math.hypot(targetX-ricky.position.x,targetZ-ricky.position.z)>.15;
+ rickyWalkPhase+=dt*(moving?9:2);
+ const stride=moving?Math.sin(rickyWalkPhase)*.5:0;
+ rickyLeftLeg.rotation.x=THREE.MathUtils.damp(rickyLeftLeg.rotation.x,stride,9,dt);
+ rickyRightLeg.rotation.x=THREE.MathUtils.damp(rickyRightLeg.rotation.x,-stride,9,dt);
+ rickyRightArm.rotation.x=THREE.MathUtils.damp(rickyRightArm.rotation.x,-stride*.55,9,dt);
+ rickyShield.rotation.z=THREE.MathUtils.damp(rickyShield.rotation.z,rickyShieldFlash>0?-.4:0,10,dt);
  rickyShieldFlash=Math.max(0,rickyShieldFlash-dt);
  rickyShield.material.emissive.setHex(rickyShieldFlash>0?0x39cfff:0x000000);
 }
 function hurt(amount){
- if(storyMode&&active&&elapsed>=rickyBlockReady){
+ if(storyMode&&active&&ricky.visible&&Math.hypot(player.x-ricky.position.x,player.z-ricky.position.z)<5&&elapsed>=rickyBlockReady){
   rickyBlockReady=elapsed+9;
   rickyShieldFlash=.5;
   amount=Math.max(0,amount*.35);

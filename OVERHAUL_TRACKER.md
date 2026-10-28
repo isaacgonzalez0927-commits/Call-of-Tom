@@ -21,7 +21,7 @@ This is a staged implementation plan. A checked item means code has been committ
 - [x] Display three distinct main-menu entries: Story Campaign (development preview), Solo Practice (playable), and Online Multiplayer (existing squad gameplay).\n- [ ] Implement story campaign gameplay and separate save data boundaries.
 
 ## Phase 3 — Combat and companions
-- [ ] Add Ricky, shield blocking, animation and campaign/practice appearances.
+- [x] Add a first Ricky model, story following behavior, and timed shield blocking (commit 0b75f10).\n- [ ] Polish Ricky's animations and add his Practice appearance.
 - [ ] Add Little Andrew companion AI, dialogue and support behavior.
 - [ ] Implement hand-to-hand combat with animation, range, cooldown and damage rules.
 - [ ] Expand water weapons with unique handling, balance and effects.

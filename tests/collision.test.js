@@ -45,3 +45,15 @@ test('three distinct menu entries keep story separate from online squads',()=>{
  assert.match(html,/storyMenuButton'\)\.onclick/);
  assert.match(html,/campaignMenuButton'\)\.onclick=showCampaign/);
 });
+
+test('story progress is saved only after the chapter is completed',()=>{
+ assert.match(html,/storyProgressKey='call-of-tom-story-progress-v1'/);
+ assert.match(html,/localStorage\.setItem\(storyProgressKey,'chapter1'\)/);
+ assert.match(html,/storyChapterComplete=true/);
+ assert.match(html,/storyPanelRefresh\(\)/);
+});
+test('story mission retains three waves and a final boss',()=>{
+ assert.match(html,/bossWave=storyMode \? wave===3/);
+ assert.match(html,/wave===1\?7:wave===2\?11:13/);
+ assert.match(html,/if\(storyMode&&wave>=3\)/);
+});

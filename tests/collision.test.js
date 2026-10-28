@@ -57,3 +57,10 @@ test('story mission retains three waves and a final boss',()=>{
  assert.match(html,/wave===1\?7:wave===2\?11:13/);
  assert.match(html,/if\(storyMode&&wave>=3\)/);
 });
+
+test('Ricky follows only in story mode and blocks hits on a cooldown',()=>{
+ assert.match(html,/ricky\.visible=storyMode&&active&&!dead/);
+ assert.match(html,/rickyBlockReady=elapsed\+9/);
+ assert.match(html,/amount=Math\.max\(0,amount\*\.35\)/);
+ assert.match(html,/updateRicky\(dt\)/);
+});

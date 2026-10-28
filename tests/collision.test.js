@@ -88,3 +88,12 @@ test('story objective HUD shows live companion ability readiness',()=>{
  assert.match(html,/elapsed>=littleAndrewNextHelp/);
  assert.match(html,/if\(storyMode&&active&&!dead\)updateHud\(\)/);
 });
+
+test('story intro and victory scenes support continuing and skipping',()=>{
+ assert.match(html,/id="storyScene"/);
+ assert.match(html,/function showStoryScene\(steps,onDone\)/);
+ assert.match(html,/storySceneNext'\)\.onclick/);
+ assert.match(html,/storySceneSkip'\)\.onclick=finishStoryScene/);
+ assert.match(html,/CHAPTER 1 — THE INVASION/);
+ assert.match(html,/TO BE CONTINUED/);
+});
